@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpotCredit — Simula o teu crédito habitação</title>
+<meta name="description" content="Simula o teu crédito habitação com taxas reais dos bancos portugueses, medidas jovem 2026 e Euribor actualizada.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #F5EDE0;
+  --surf:    #EFE3CF;
+  --deep:    #7A3B1E;
+  --mid:     #C4724A;
+  --soft:    #D4A882;
+  --ink:     #2E1A0E;
+  --ink2:    #7A5C44;
+  --border:  rgba(122,59,30,0.15);
+  --fine:    rgba(122,59,30,0.10);
+  --serif:   'Cormorant Garamond', Georgia, serif;
+  --sans:    'DM Sans', system-ui, sans-serif;
+  --grotesk: 'Space Grotesk', system-ui, sans-serif;
+  --ok:      #3D6B45;
+  --ok-lt:   rgba(61,107,69,0.10);
+  --warn:    #8B5C1A;
+  --warn-lt: rgba(139,92,26,0.10);
+  --bad:     #8B2222;
+  --bad-lt:  rgba(139,34,34,0.10);
+  --radius:  5px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(245,237,224,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--grotesk);
+  font-size: 16px; font-weight: 700;
+  color: var(--deep);
+  text-decoration: none;
+  letter-spacing: -0.03em;
+}
+.nav-logo span { color: var(--mid); }
+.nav-links { display: flex; gap: 20px; list-style: none; }
+.nav-links a {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink2); text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--deep); }
+.nav-cta {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: #fff; background: var(--mid);
+  border: none; border-radius: var(--radius);
+  padding: 8px 16px; text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.nav-cta:hover { background: var(--deep); }
+
+/* ── HERO ── */
+.hero-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 48px 0;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 56px;
+  align-items: start;
+}
+.hero-label {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
+}
+.hero-label-line { width: 20px; height: 1.5px; background: var(--mid); flex-shrink: 0; }
+.hero-label-text {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--mid);
+}
+
+/* BIG type */
+.hero-hed {
+  font-family: var(--grotesk);
+  font-weight: 700;
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  color: var(--deep);
+  margin-bottom: 0;
+}
+.hero-hed-solid { font-size: clamp(64px, 8vw, 96px); display: block; }
+.hero-hed-outline {
+  font-size: clamp(64px, 8vw, 96px);
+  display: block;
+  color: transparent;
+  -webkit-text-stroke: 2.5px var(--mid);
+  paint-order: stroke fill;
+}
+.hero-serif-line {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(28px, 3.5vw, 42px);
+  color: var(--mid);
+  letter-spacing: -0.01em;
+  border-top: 0.5px solid var(--fine);
+  padding-top: 16px;
+  margin-top: 16px;
+  margin-bottom: 28px;
+  line-height: 1.2;
+}
+.hero-desc {
+  font-size: 14px; font-weight: 300;
+  color: var(--ink2); line-height: 1.75;
+  max-width: 440px;
+  margin-bottom: 32px;
+}
+.hero-cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 48px; }
+.btn-primary {
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #fff; background: var(--mid);
+  border: none; border-radius: var(--radius);
+  padding: 12px 24px; cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+  display: inline-block;
+}
+.btn-primary:hover { background: var(--deep); transform: translateY(-1px); }
+.btn-ghost {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink2); background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 24px; cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+  display: inline-block;
+}
+.btn-ghost:hover { border-color: var(--soft); color: var(--deep); }
+
+/* ── LIVE DATA PANEL (right col) ── */
+/* NOTE: update LIVE_DATA object in JS to refresh rates daily */
+.data-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+  position: sticky;
+  top: 70px;
+}
+.data-panel-head {
+  background: var(--deep);
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.data-panel-head-title {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(239,227,207,0.6);
+}
+.data-panel-date {
+  font-size: 9px; font-weight: 400;
+  color: rgba(196,114,74,0.8);
+  letter-spacing: 0.04em;
+}
+.data-panel-live-dot {
+  width: 5px; height: 5px;
+  background: var(--mid); border-radius: 50%;
+  display: inline-block; margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Euribor rows */
+.eur-rows { background: var(--surf); }
+.eur-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px;
+  border-bottom: 0.5px solid var(--fine);
+}
+.eur-row:last-child { border-bottom: none; }
+.eur-row-label {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink2);
+}
+.eur-row-val {
+  font-family: var(--grotesk);
+  font-size: 20px; font-weight: 600;
+  color: var(--deep); letter-spacing: -0.03em;
+}
+.eur-row-delta {
+  font-size: 9px; font-weight: 500;
+  padding: 2px 6px; border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+.delta-down { color: var(--ok); background: var(--ok-lt); }
+.delta-up   { color: var(--warn); background: var(--warn-lt); }
+.delta-flat { color: var(--ink2); background: rgba(122,59,30,0.08); }
+
+/* BCE note */
+.bce-note {
+  background: var(--bg);
+  border-top: 0.5px solid var(--fine);
+  padding: 11px 18px;
+  font-size: 10px; font-weight: 300;
+  color: var(--ink2); line-height: 1.6;
+}
+.bce-note strong { font-weight: 500; color: var(--deep); }
+
+/* Medidas quick-list */
+.medidas-quick { background: var(--surf); border-top: 0.5px solid var(--fine); }
+.medidas-quick-title {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink2);
+  padding: 12px 18px 8px;
+}
+.mq-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 18px;
+  border-top: 0.5px solid var(--fine);
+}
+.mq-tag {
+  font-size: 8px; font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--mid);
+  background: rgba(196,114,74,0.12);
+  border-radius: 3px; padding: 2px 7px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.mq-text { font-size: 11px; font-weight: 300; color: var(--ink2); line-height: 1.4; }
+
+/* ── SECTION RULE ── */
+.page-rule {
+  height: 0.5px; background: var(--fine);
+  max-width: 1200px; margin: 0 auto;
+}
+
+/* ── SIMULATOR ── */
+.sim-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 48px;
+}
+.sim-section-label {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 10px;
+}
+.sim-section-title {
+  font-family: var(--grotesk);
+  font-size: clamp(28px, 3vw, 38px); font-weight: 700;
+  letter-spacing: -0.04em; color: var(--deep);
+  margin-bottom: 32px; line-height: 1;
+}
+
+.sim-card {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sim-head {
+  padding: 24px 32px;
+  border-bottom: 0.5px solid var(--fine);
+  display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.sim-head-title {
+  font-family: var(--grotesk);
+  font-size: 16px; font-weight: 600;
+  letter-spacing: -0.03em; color: var(--deep);
+}
+.sim-head-sub {
+  font-size: 11px; font-weight: 300;
+  color: var(--ink2);
+}
+.sim-body { padding: 28px 32px; }
+
+/* inputs */
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px; margin-bottom: 22px;
+}
+.input-block { display: flex; flex-direction: column; gap: 5px; }
+.input-block label {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink2);
+}
+.input-block input, .input-block select {
+  font-family: var(--sans); font-size: 14px; font-weight: 400;
+  color: var(--ink); background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 9px 11px; width: 100%; outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+.input-block input:focus, .input-block select:focus { border-color: var(--mid); }
+.select-wrap { position: relative; }
+.select-wrap::after {
+  content: ''; position: absolute; right: 11px; top: 50%;
+  transform: translateY(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ink2);
+  pointer-events: none;
+}
+
+.sim-rule { height: 0.5px; background: var(--fine); margin: 22px 0; }
+
+/* toggle */
+.toggle-row { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+.toggle-wrap { position: relative; width: 40px; height: 22px; flex-shrink: 0; margin-top: 2px; }
+.toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: rgba(122,59,30,0.15);
+  border: 1px solid rgba(122,59,30,0.2);
+  border-radius: 11px; cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; left: 2px; top: 2px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(46,26,14,0.18);
+}
+input:checked + .toggle-slider { background: var(--mid); border-color: var(--mid); }
+input:checked + .toggle-slider::before { transform: translateX(18px); }
+.toggle-text strong { display: block; font-size: 14px; font-weight: 400; color: var(--ink); }
+.toggle-text span { font-size: 12px; font-weight: 300; color: var(--ink2); }
+
+/* jovem panel */
+.jovem-panel {
+  background: rgba(196,114,74,0.05);
+  border: 1px solid rgba(196,114,74,0.2);
+  border-radius: 8px;
+  padding: 18px; margin-bottom: 18px;
+  display: none; flex-direction: column; gap: 10px;
+}
+.jovem-panel.open { display: flex; }
+.jp-title {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--mid);
+}
+.medida {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.medida-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700; letter-spacing: 0.04em; color: var(--deep);
+}
+.medida-title { font-size: 13px; font-weight: 400; color: var(--ink); }
+.medida-desc { font-size: 11px; font-weight: 300; color: var(--ink2); margin-top: 3px; line-height: 1.55; }
+.medida-val { font-size: 13px; font-weight: 400; color: var(--ok); margin-top: 5px; }
+.medida-warn-tag {
+  display: inline-block; margin-top: 4px;
+  font-size: 10px; color: var(--warn); background: var(--warn-lt);
+  border-radius: 3px; padding: 2px 7px;
+}
+.sub-toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.sub-toggle-row span { font-size: 12px; font-weight: 300; color: var(--ink2); }
+
+/* savings bar */
+.savings-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--ok-lt); border: 1px solid rgba(61,107,69,0.2);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 18px;
+}
+.savings-bar span { font-size: 13px; font-weight: 300; color: var(--ok); flex: 1; }
+.savings-bar strong { font-family: var(--grotesk); font-size: 18px; font-weight: 700; color: var(--ok); white-space: nowrap; letter-spacing: -0.03em; }
+
+/* tabs */
+.tabs {
+  display: flex; border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 18px;
+}
+.tab-btn {
+  flex: 1; padding: 10px;
+  background: transparent; border: none; cursor: pointer;
+  font-family: var(--grotesk); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink2);
+  border-right: 0.5px solid var(--fine);
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn:last-child { border-right: none; }
+.tab-btn.active { background: var(--deep); color: #fff; }
+.tab-btn:not(.active):hover { background: rgba(122,59,30,0.05); color: var(--deep); }
+
+/* metrics */
+.metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
+.mc { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.mc-label { font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); }
+.mc-val { font-family: var(--grotesk); font-size: 26px; font-weight: 700; color: var(--deep); margin-top: 4px; letter-spacing: -0.04em; }
+.mc-sub { font-size: 10px; font-weight: 300; color: var(--soft); margin-top: 3px; }
+
+/* warn */
+.sim-warn {
+  font-size: 12px; font-weight: 300;
+  color: var(--warn); background: var(--warn-lt);
+  border: 1px solid rgba(139,92,26,0.18);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px;
+}
+
+/* bank rows */
+.bank-rows { display: flex; flex-direction: column; gap: 8px; }
+.bank-row {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 18px;
+  display: grid; grid-template-columns: 1fr auto auto auto;
+  align-items: center; gap: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.bank-row:hover { border-color: var(--soft); box-shadow: 0 2px 12px rgba(122,59,30,0.06); }
+.bank-row.best { border-color: var(--mid); background: rgba(196,114,74,0.04); }
+.bank-name { font-size: 13px; font-weight: 400; color: var(--ink); }
+.bank-meta { font-size: 10px; font-weight: 300; color: var(--ink2); margin-top: 2px; }
+.bank-bar { height: 2px; background: rgba(122,59,30,0.10); border-radius: 1px; margin-top: 6px; overflow: hidden; }
+.bank-bar-fill { height: 100%; border-radius: 1px; transition: width 0.5s; }
+.bank-col { text-align: center; font-size: 11px; font-weight: 300; color: var(--ink2); line-height: 1.6; }
+.bank-prest-col { text-align: right; }
+.bank-prest { font-family: var(--grotesk); font-size: 20px; font-weight: 700; color: var(--deep); white-space: nowrap; letter-spacing: -0.04em; }
+.bank-prest-sub { font-size: 10px; font-weight: 300; color: var(--soft); text-align: right; margin-top: 1px; }
+.etag { font-size: 10px; border-radius: 3px; padding: 2px 7px; display: inline-block; font-weight: 500; letter-spacing: 0.02em; }
+.etag-ok { background: var(--ok-lt); color: var(--ok); }
+.etag-warn { background: var(--warn-lt); color: var(--warn); }
+.etag-bad { background: var(--bad-lt); color: var(--bad); }
+.best-badge {
+  font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: rgba(196,114,74,0.14); color: var(--mid);
+  border-radius: 3px; padding: 2px 7px; margin-left: 7px;
+  vertical-align: middle; font-weight: 600;
+}
+
+/* chart */
+.chart-wrap { position: relative; height: 190px; margin: 22px 0 6px; }
+.sim-note {
+  font-size: 10px; font-weight: 300; color: var(--soft); line-height: 1.65;
+  border-top: 0.5px solid var(--fine); padding-top: 14px; margin-top: 14px;
+}
+
+/* ── INFO / HOW ── */
+.info-wrap {
+  max-width: 1200px; margin: 0 auto; padding: 64px 48px;
+}
+.info-label {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 10px;
+}
+.info-title {
+  font-family: var(--grotesk);
+  font-size: clamp(24px, 2.5vw, 32px); font-weight: 700;
+  letter-spacing: -0.04em; color: var(--deep);
+  margin-bottom: 36px;
+}
+.how-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.how-cell {
+  background: var(--surf); padding: 30px 24px;
+  border-right: 0.5px solid var(--fine);
+}
+.how-cell:last-child { border-right: none; }
+.how-num {
+  font-family: var(--serif); font-style: italic;
+  font-size: 40px; font-weight: 400;
+  color: var(--soft); line-height: 1; margin-bottom: 14px;
+}
+.how-title { font-size: 13px; font-weight: 600; font-family: var(--grotesk); color: var(--deep); margin-bottom: 7px; letter-spacing: -0.02em; }
+.how-desc { font-size: 12px; font-weight: 300; color: var(--ink2); line-height: 1.65; }
+
+/* ── MEDIDAS JOVEM SECTION ── */
+.medidas-wrap {
+  max-width: 1200px; margin: 0 auto; padding: 0 48px 72px;
+}
+.medidas-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.medida-card { background: var(--surf); padding: 26px; }
+.medida-card-tag {
+  font-size: 8px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--mid); margin-bottom: 10px; display: block;
+  font-family: var(--grotesk);
+}
+.medida-card-title {
+  font-family: var(--serif); font-style: italic;
+  font-size: 18px; font-weight: 400; color: var(--deep);
+  margin-bottom: 8px; line-height: 1.2;
+}
+.medida-card-desc { font-size: 12px; font-weight: 300; color: var(--ink2); line-height: 1.6; }
+.medida-card-val {
+  display: block; margin-top: 14px;
+  font-size: 11px; font-weight: 500;
+  color: var(--ok); font-family: var(--grotesk);
+  letter-spacing: 0.02em;
+  border-top: 0.5px solid rgba(61,107,69,0.2); padding-top: 10px;
+}
+
+/* ── FOOTER ── */
+footer {
+  border-top: 0.5px solid var(--fine);
+  padding: 44px 48px 36px;
+  max-width: 1200px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.footer-top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 16px; }
+.footer-logo {
+  font-family: var(--grotesk); font-size: 15px; font-weight: 700;
+  color: var(--deep); text-decoration: none; letter-spacing: -0.03em;
+}
+.footer-logo span { color: var(--mid); }
+.footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+.footer-links a {
+  font-size: 10px; font-weight: 400; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink2); text-decoration: none;
+  transition: color 0.15s;
+}
+.footer-links a:hover { color: var(--deep); }
+.footer-disclaimer {
+  font-size: 10px; font-weight: 300; color: var(--soft); line-height: 1.75;
+  border-top: 0.5px solid var(--fine); padding-top: 18px;
+}
+
+/* ── LANG TOGGLE ── */
+.lang-toggle {
+  display: flex; align-items: center; gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: var(--grotesk);
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink2);
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
+.lang-toggle:hover { border-color: var(--mid); color: var(--deep); }
+#lang-active { color: var(--deep); }
+#lang-inactive { color: var(--soft); }
+.lang-sep { color: var(--fine); }
+
+/* ── EXPAT PANEL ── */
+.expat-panel {
+  background: rgba(122,59,30,0.04);
+  border: 1px solid rgba(122,59,30,0.18);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  display: none; flex-direction: column; gap: 8px;
+}
+.expat-panel.open { display: flex; }
+.expat-panel-title {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--deep);
+}
+.expat-note {
+  font-size: 12px; font-weight: 300; color: var(--ink2); line-height: 1.6;
+}
+.expat-note strong { font-weight: 500; color: var(--deep); }
+.expat-warn {
+  font-size: 11px; font-weight: 400;
+  color: var(--warn); background: var(--warn-lt);
+  border-radius: 3px; padding: 8px 12px;
+  border: 1px solid rgba(139,92,26,0.15);
+}
+
+/* ── EXPAT SECTION ── */
+.expat-section {
+  max-width: 1200px; margin: 0 auto; padding: 64px 48px;
+}
+.expat-coming-soon {
+  border: 1.5px dashed rgba(122,59,30,0.2);
+  border-radius: 10px;
+  padding: 56px 40px;
+  text-align: center;
+  background: rgba(239,227,207,0.4);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.expat-cs-tag {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--mid);
+  background: rgba(196,114,74,0.1);
+  border-radius: 3px; padding: 4px 12px;
+}
+.expat-cs-title {
+  font-family: var(--grotesk);
+  font-size: clamp(22px, 2.5vw, 30px); font-weight: 700;
+  letter-spacing: -0.04em; color: var(--deep);
+  line-height: 1.1;
+}
+.expat-cs-desc {
+  font-size: 13px; font-weight: 300; color: var(--ink2);
+  max-width: 400px; line-height: 1.7;
+}
+.expat-cs-items {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; margin-top: 4px;
+}
+.expat-cs-item {
+  font-size: 10px; font-weight: 500;
+  color: var(--ink2); border: 1px solid var(--border);
+  border-radius: 3px; padding: 5px 12px;
+  background: var(--bg);
+  letter-spacing: 0.03em;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 880px) {
+  .hero-wrap { grid-template-columns: 1fr; gap: 40px; padding: 48px 24px 0; }
+  .data-panel { position: static; }
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .sim-body { padding: 18px; }
+  .sim-head { padding: 18px; }
+  .metrics { grid-template-columns: 1fr 1fr; }
+  .bank-row { grid-template-columns: 1fr auto; }
+  .bank-col { display: none; }
+  .sim-wrap, .info-wrap, .medidas-wrap, footer { padding-left: 24px; padding-right: 24px; }
+  .how-cell { border-right: none; border-bottom: 0.5px solid var(--fine); }
+  .how-cell:last-child { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">SPOT<span>CREDIT</span></a>
+  <ul class="nav-links">
+    <li><a href="#simulador" data-pt="Simulador" data-en="Calculator">Simulador</a></li>
+    <li><a href="#medidas" data-pt="Medidas jovem" data-en="Youth perks">Medidas jovem</a></li>
+    <li><a href="#expats" data-pt="Expats" data-en="Expats">Expats</a></li>
+    <li><a href="#sobre" data-pt="Sobre" data-en="About">Sobre</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()" aria-label="Toggle language">
+      <span id="lang-active">PT</span><span class="lang-sep">·</span><span id="lang-inactive">EN</span>
+    </button>
+    <a class="nav-cta" href="#simulador" id="nav-cta-btn">Simular agora</a>
+  </div>
+</nav>
+
+<!-- HERO + DATA PANEL -->
+<div class="hero-wrap">
+
+  <!-- LEFT: headline -->
+  <div>
+    <div class="hero-label">
+      <span class="hero-label-line"></span>
+      <span class="hero-label-text">Portugal · Maio 2026</span>
+    </div>
+
+    <h1 class="hero-hed">
+      <span class="hero-hed-solid">O TEU</span>
+      <span class="hero-hed-solid">CRÉDITO</span>
+      <span class="hero-hed-outline">HABITAÇÃO</span>
+    </h1>
+
+    <div class="hero-serif-line">sem surpresas.</div>
+
+    <p class="hero-desc">Taxas reais dos principais bancos portugueses, Euribor actualizada e todas as medidas de apoio jovem em vigor — num só lugar.</p>
+
+    <div class="hero-cta-row">
+      <a class="btn-primary" href="#simulador">Iniciar simulação</a>
+      <a class="btn-ghost" href="#medidas">Medidas jovem</a>
+    </div>
+  </div>
+
+  <!-- RIGHT: live data panel -->
+  <!-- ╔══════════════════════════════════════════════════╗
+       ║  LIVE DATA — update daily by editing LIVE_DATA  ║
+       ║  in the <script> block at the bottom of page    ║
+       ╚══════════════════════════════════════════════════╝ -->
+  <div class="data-panel" id="data-panel">
+    <div class="data-panel-head">
+      <span class="data-panel-head-title">
+        <span class="data-panel-live-dot"></span>Taxas ao vivo
+      </span>
+      <span class="data-panel-date" id="panel-date"></span>
+    </div>
+
+    <div class="eur-rows" id="eur-rows"></div>
+
+    <div class="bce-note" id="bce-note"></div>
+
+    <div class="medidas-quick">
+      <div class="medidas-quick-title">Apoios jovem activos</div>
+      <div class="mq-row"><span class="mq-tag">IMT</span><span class="mq-text">Isenção total até 330.539 € — OE2026</span></div>
+      <div class="mq-row"><span class="mq-tag">IS</span><span class="mq-text">Imposto do Selo + emolumentos</span></div>
+      <div class="mq-row"><span class="mq-tag">GP</span><span class="mq-text">Garantia Pública — financiamento 100%</span></div>
+      <div class="mq-row"><span class="mq-tag">IRS</span><span class="mq-text">IRS Jovem — desconto progressivo</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="page-rule" style="margin-top:56px"></div>
+
+<!-- SIMULATOR -->
+<div class="sim-wrap" id="simulador">
+  <p class="sim-section-label">Ferramenta</p>
+  <h2 class="sim-section-title">Simulador de crédito habitação</h2>
+
+  <div class="sim-card">
+    <div class="sim-head">
+      <div>
+        <div class="sim-head-title">Calcula a tua prestação mensal</div>
+        <div class="sim-head-sub">CGD · Millennium BCP · Bankinter · ABANCA — taxas em tempo real</div>
+      </div>
+    </div>
+    <div class="sim-body">
+
+      <div class="input-grid">
+        <div class="input-block">
+          <label>Rendimento líquido (€/mês)</label>
+          <input type="number" id="rend" value="2100" min="500" max="50000" step="100">
+        </div>
+        <div class="input-block">
+          <label>Outros créditos (€/mês)</label>
+          <input type="number" id="enc" value="0" min="0" step="50">
+        </div>
+        <div class="input-block">
+          <label>Valor do imóvel (€)</label>
+          <input type="number" id="vimovel" value="250000" min="50000" step="5000">
+        </div>
+        <div class="input-block">
+          <label>Entrada disponível (€)</label>
+          <input type="number" id="entrada" value="50000" min="0" step="5000">
+        </div>
+        <div class="input-block">
+          <label>Prazo</label>
+          <div class="select-wrap">
+            <select id="prazo">
+              <option value="15">15 anos</option>
+              <option value="20">20 anos</option>
+              <option value="25">25 anos</option>
+              <option value="30" selected>30 anos</option>
+              <option value="35">35 anos</option>
+              <option value="40">40 anos</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-block">
+          <label>Tipo de habitação</label>
+          <div class="select-wrap">
+            <select id="thab">
+              <option value="hpp" selected>Habitação própria permanente</option>
+              <option value="sec">2.ª habitação / investimento</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-block">
+          <label>Indexante Euribor</label>
+          <div class="select-wrap">
+            <select id="eurpref">
+              <option value="6" selected>6 meses (mais comum)</option>
+              <option value="12">12 meses</option>
+              <option value="3">3 meses</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="sim-rule"></div>
+
+      <div class="toggle-row">
+        <label class="toggle-wrap"><input type="checkbox" id="expat_toggle"><span class="toggle-slider"></span></label>
+        <div class="toggle-text">
+          <strong data-pt="Sou não residente / expat" data-en="I am non-resident / expat">Sou não residente / expat</strong>
+          <span data-pt="Aplica LTV máximo de 70% e desactiva medidas exclusivas a residentes" data-en="Applies max 70% LTV and disables resident-only measures">Aplica LTV máximo de 70% e desactiva medidas exclusivas a residentes</span>
+        </div>
+      </div>
+
+      <div class="expat-panel" id="expat_panel">
+        <div class="expat-panel-title" data-pt="Modo não residente activo" data-en="Non-resident mode active">Modo não residente activo</div>
+        <div class="expat-note">
+          <strong data-pt="LTV máximo: 70%" data-en="Max LTV: 70%">LTV máximo: 70%</strong> — <span data-pt="os bancos portugueses financiam geralmente até 70% do valor para não residentes." data-en="Portuguese banks generally finance up to 70% for non-residents.">os bancos portugueses financiam geralmente até 70% do valor para não residentes.</span>
+        </div>
+        <div class="expat-warn" data-pt="IMT Jovem, Garantia Pública e IRS Jovem requerem residência fiscal em Portugal — não aplicáveis neste modo." data-en="IMT Jovem, Garantia Pública and IRS Jovem require fiscal residency in Portugal — not available in this mode.">IMT Jovem, Garantia Pública e IRS Jovem requerem residência fiscal em Portugal — não aplicáveis neste modo.</div>
+        <div class="expat-note" data-pt="ℹ Em breve: secção dedicada a expats com condições específicas de cada banco." data-en="ℹ Coming soon: dedicated expat section with bank-specific conditions.">ℹ Em breve: secção dedicada a expats com condições específicas de cada banco.</div>
+      </div>
+
+      <div class="toggle-row">
+        <label class="toggle-wrap"><input type="checkbox" id="jovem_toggle"><span class="toggle-slider"></span></label>
+        <div class="toggle-text">
+          <strong data-pt="Tenho 35 anos ou menos" data-en="I am 35 years old or under">Tenho 35 anos ou menos</strong>
+          <span data-pt="Activa medidas de apoio à habitação jovem em vigor até 31 dez 2026" data-en="Activates youth housing support measures in force until 31 Dec 2026">Activa medidas de apoio à habitação jovem em vigor até 31 dez 2026</span>
+        </div>
+      </div>
+
+      <div class="jovem-panel" id="jovem_panel">
+        <div class="jp-title">Medidas de apoio disponíveis — acumuláveis</div>
+
+        <div class="medida">
+          <div class="medida-icon">IMT</div>
+          <div style="flex:1">
+            <div class="medida-title">IMT Jovem + Imposto do Selo + Emolumentos</div>
+            <div class="medida-desc">Isenção total para 1.ª HPP ≤ 330.539 € (OE2026). Isenção parcial até 660.982 €.</div>
+            <div class="medida-val" id="poupanca_imt">a calcular…</div>
+            <div id="imt_sub" style="font-size:10px;color:var(--soft);margin-top:2px"></div>
+          </div>
+        </div>
+
+        <div class="medida">
+          <div class="medida-icon">GP</div>
+          <div style="flex:1">
+            <div class="medida-title">Garantia Pública do Estado</div>
+            <div class="medida-desc">Estado como fiador até 15% do valor → financiamento a 100% sem entrada. Imóveis ≤ 450.000 €. Rendimento ≤ 5.800 €/mês. Contratos até 31 dez 2026.</div>
+            <div class="sub-toggle-row">
+              <label class="toggle-wrap" style="width:32px;height:18px"><input type="checkbox" id="garantia_toggle"><span class="toggle-slider"></span></label>
+              <span>Usar Garantia Pública (financiamento 100%)</span>
+            </div>
+            <div id="garantia_notes" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+        </div>
+
+        <div class="medida">
+          <div class="medida-icon">IRS</div>
+          <div style="flex:1">
+            <div class="medida-title">IRS Jovem</div>
+            <div class="medida-desc">Desconto progressivo nos primeiros 10 anos de carreira e/ou até aos 35 anos. Aumenta o rendimento disponível. Calcula o valor exacto no simulador da AT.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="savings-bar" id="savings_bar" style="display:none">
+        <span>Poupança total estimada na escritura com medidas jovem</span>
+        <strong id="savings_val"></strong>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setTab('variavel',this)">Variável</button>
+        <button class="tab-btn" onclick="setTab('mista',this)">Mista</button>
+        <button class="tab-btn" onclick="setTab('fixa',this)">Fixa</button>
+      </div>
+
+      <div class="metrics" id="metrics"></div>
+      <div id="warns"></div>
+      <div class="bank-rows" id="banks"></div>
+
+      <div class="chart-wrap">
+        <canvas id="chart" role="img" aria-label="Prestações mensais por banco"></canvas>
+      </div>
+
+      <div class="sim-note" id="note"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page-rule"></div>
+
+<!-- EXPATS SECTION -->
+<div class="expat-section" id="expats">
+  <p class="info-label" data-pt="Expats &amp; Não residentes" data-en="Expats &amp; Non-residents">Expats &amp; Não residentes</p>
+  <h2 class="info-title" data-pt="A comprar em Portugal a partir do estrangeiro?" data-en="Buying in Portugal from abroad?">A comprar em Portugal a partir do estrangeiro?</h2>
+  <div class="expat-coming-soon">
+    <span class="expat-cs-tag" data-pt="Em breve" data-en="Coming soon">Em breve</span>
+    <div class="expat-cs-title" data-pt="Secção dedicada a expats" data-en="Dedicated expat section">Secção dedicada a expats</div>
+    <p class="expat-cs-desc" data-pt="Estamos a preparar informação detalhada sobre financiamento para não residentes: condições especiais, documentação necessária e comparação entre bancos." data-en="We are preparing detailed information for non-residents: special conditions, required documentation and bank comparisons.">Estamos a preparar informação detalhada sobre financiamento para não residentes: condições especiais, documentação necessária e comparação entre bancos.</p>
+    <div class="expat-cs-items">
+      <span class="expat-cs-item" data-pt="LTV até 70% (não residente)" data-en="Up to 70% LTV (non-resident)">LTV até 70% (não residente)</span>
+      <span class="expat-cs-item" data-pt="NHR / estatuto fiscal" data-en="NHR / tax status">NHR / estatuto fiscal</span>
+      <span class="expat-cs-item" data-pt="Documentação estrangeira" data-en="Foreign documentation">Documentação estrangeira</span>
+      <span class="expat-cs-item" data-pt="Comparação por banco" data-en="Per-bank comparison">Comparação por banco</span>
+    </div>
+  </div>
+</div>
+
+<div class="page-rule"></div>
+
+<!-- HOW IT WORKS -->
+<div class="info-wrap" id="sobre">
+  <p class="info-label">Como funciona</p>
+  <h2 class="info-title">Transparente por definição</h2>
+  <div class="how-grid">
+    <div class="how-cell">
+      <div class="how-num">01</div>
+      <div class="how-title">Taxas reais dos bancos</div>
+      <div class="how-desc">Spreads e TAEG publicados directamente nos sites de CGD, Millennium BCP, Bankinter e ABANCA. Sem estimativas.</div>
+    </div>
+    <div class="how-cell">
+      <div class="how-num">02</div>
+      <div class="how-title">Euribor actualizada</div>
+      <div class="how-desc">Taxas diárias do mercado interbancário europeu. Actualizamos regularmente para reflectir o valor real do teu contrato.</div>
+    </div>
+    <div class="how-cell">
+      <div class="how-num">03</div>
+      <div class="how-title">Medidas jovem 2026</div>
+      <div class="how-desc">IMT Jovem, Imposto do Selo, Garantia Pública — todas as medidas em vigor calculadas automaticamente.</div>
+    </div>
+    <div class="how-cell">
+      <div class="how-num">04</div>
+      <div class="how-title">Zero dados pessoais</div>
+      <div class="how-desc">Todas as simulações correm no teu browser. Não guardamos nada, não pedimos nada.</div>
+    </div>
+  </div>
+</div>
+
+<div class="page-rule"></div>
+
+<!-- MEDIDAS JOVEM -->
+<div class="medidas-wrap" id="medidas">
+  <div style="padding:64px 0 36px">
+    <p class="info-label">Medidas em vigor · 2026</p>
+    <h2 class="info-title">Apoios para jovens até 35 anos</h2>
+  </div>
+  <div class="medidas-grid">
+    <div class="medida-card">
+      <span class="medida-card-tag">IMT Jovem</span>
+      <div class="medida-card-title">Isenção de IMT</div>
+      <div class="medida-card-desc">Isenção total de IMT para 1.ª habitação própria e permanente. OE2026 actualizou o limite para 330.539 €.</div>
+      <span class="medida-card-val">Até ~10–15 mil € poupados</span>
+    </div>
+    <div class="medida-card">
+      <span class="medida-card-tag">Imposto do Selo</span>
+      <div class="medida-card-title">Isenção de IS e emolumentos</div>
+      <div class="medida-card-desc">Isenção do Imposto do Selo (0,8%) sobre a compra e dos emolumentos de registo. Cumulável com a isenção de IMT.</div>
+      <span class="medida-card-val">0,8% do valor do imóvel</span>
+    </div>
+    <div class="medida-card">
+      <span class="medida-card-tag">Garantia Pública</span>
+      <div class="medida-card-title">Estado como fiador</div>
+      <div class="medida-card-desc">O Estado garante até 15% do valor da transação, permitindo financiamento a 100% sem entrada. Imóveis ≤ 450.000 €. Até 31 dez 2026.</div>
+      <span class="medida-card-val">Sem entrada necessária</span>
+    </div>
+    <div class="medida-card">
+      <span class="medida-card-tag">IRS Jovem</span>
+      <div class="medida-card-title">Desconto progressivo de IRS</div>
+      <div class="medida-card-desc">Redução de IRS nos primeiros 10 anos de carreira e/ou até aos 35 anos. Aumenta o rendimento líquido disponível.</div>
+      <span class="medida-card-val">Rendimento líquido mais alto</span>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <a class="footer-logo" href="#">SPOT<span>CREDIT</span></a>
+    <div class="footer-links">
+      <a href="#simulador">Simulador</a>
+      <a href="#medidas">Medidas jovem</a>
+      <a href="#sobre">Como funciona</a>
+    </div>
+  </div>
+  <div class="footer-disclaimer">
+    SpotCredit é uma ferramenta informativa independente. Os valores apresentados são meramente indicativos e não constituem aconselhamento financeiro, proposta de crédito ou compromisso por parte de qualquer instituição bancária. As taxas de juro e spreads são baseados em informação pública dos bancos e podem estar desactualizados. A concessão de crédito está sempre sujeita a análise de risco pela instituição financeira. Confirme sempre as condições directamente com o banco antes de tomar qualquer decisão. Taxas Euribor de 29 Abril 2026 · OE2026 em vigor.
+  </div>
+</footer>
+
+<script>
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  LIVE DATA — edit this object to update the panel daily     ║
+   ║  Fields:                                                     ║
+   ║    date:    display string shown on the panel header        ║
+   ║    bce:     short BCE meeting note (1 sentence)             ║
+   ║    eur3/6/12: Euribor rates (number)                        ║
+   ║    delta3/6/12: change indicator — "down" | "up" | "flat"  ║
+   ║    deltaLabel3/6/12: e.g. "−0.08 pp" shown next to rate     ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+const LIVE_DATA = {
+  date:         '29 Abr 2026',
+  bce:          'BCE manteve taxas na reunião de 30 Abr 2026. Próxima decisão: Junho 2026.',
+  eur3:         2.149,
+  eur6:         2.462,
+  eur12:        2.769,
+  delta3:       'down',   deltaLabel3: '−0.06 pp',
+  delta6:       'down',   deltaLabel6: '−0.09 pp',
+  delta12:      'flat',   deltaLabel12: '—',
+};
+
+/* Render live data panel */
+(function renderPanel() {
+  document.getElementById('panel-date').textContent = LIVE_DATA.date;
+
+  const rates = [
+    { label: 'Euribor 3 meses',  val: LIVE_DATA.eur3,  delta: LIVE_DATA.delta3,  dlabel: LIVE_DATA.deltaLabel3 },
+    { label: 'Euribor 6 meses',  val: LIVE_DATA.eur6,  delta: LIVE_DATA.delta6,  dlabel: LIVE_DATA.deltaLabel6 },
+    { label: 'Euribor 12 meses', val: LIVE_DATA.eur12, delta: LIVE_DATA.delta12, dlabel: LIVE_DATA.deltaLabel12 },
+  ];
+
+  const container = document.getElementById('eur-rows');
+  container.innerHTML = rates.map((r) => {
+    const cls = r.delta === 'down' ? 'delta-down' : r.delta === 'up' ? 'delta-up' : 'delta-flat';
+    return `
+      <div class="eur-row">
+        <span class="eur-row-label">${r.label}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="eur-row-delta ${cls}">${r.dlabel}</span>
+          <span class="eur-row-val">${r.val.toFixed(3).replace('.',',')}%</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('bce-note').innerHTML =
+    `<strong>BCE</strong> — ${LIVE_DATA.bce}`;
+})();
+
+/* ── Simulator ── */
+const EUR = { 3: LIVE_DATA.eur3, 6: LIVE_DATA.eur6, 12: LIVE_DATA.eur12 };
+
+const IMT_HPP = [
+  { max: 106346,   rate: 0,     parcela: 0 },
+  { max: 145445,   rate: 0.02,  parcela: 2126.92 },
+  { max: 198568,   rate: 0.05,  parcela: 6490.27 },
+  { max: 330539,   rate: 0.07,  parcela: 10461.63 },
+  { max: 660982,   rate: 0.08,  parcela: 13766.89 },
+  { max: Infinity, rate: 0.075, parcela: 0 }
+];
+
+function calcIMT(v) {
+  for (const b of IMT_HPP) {
+    if (v <= b.max) return b.rate === 0 ? 0 : b.rate === 0.075 ? v * 0.075 : Math.max(0, v * b.rate - b.parcela);
+  }
+  return 0;
+}
+
+function calcPoupanca(v, hpp) {
+  if (!hpp) return { total: 0, tipo: 'none' };
+  const imt = calcIMT(v), is = v * 0.008, emol = 700;
+  if (v <= 330539) return { imt, is, emol, total: imt + is + emol, tipo: 'total' };
+  if (v <= 660982) {
+    const f = 330539 / v;
+    return { imt: imt*f, is: is*f, emol, total: imt*f + is*f + emol, tipo: 'parcial' };
+  }
+  return { total: 0, tipo: 'excede' };
+}
+
+const BANKS = {
+  variavel: [
+    { nome: 'CGD — com bonificação',           idx: 6,  spread: 0.85, taeg: 3.8, bonus: 'domiciliação + seguros Fidelidade + cartão Caixa' },
+    { nome: 'ABANCA — com bonificação',         idx: 12, spread: 0.70, taeg: 3.8, bonus: 'domiciliação + seguros + cartão crédito ABANCA' },
+    { nome: 'Millennium BCP — com bonif.',      idx: 12, spread: 0.70, taeg: 3.9, bonus: 'domiciliação + seguros Ocidental + cartão crédito' },
+    { nome: 'Bankinter — com bonificação',      idx: 12, spread: 0.70, taeg: 4.0, bonus: 'domiciliação + seguro vida + multirriscos' },
+    { nome: 'CGD — sem bonificação',            idx: 6,  spread: 1.35, taeg: 4.3, bonus: 'sem produtos associados' },
+    { nome: 'Millennium BCP — sem bonif.',      idx: 12, spread: 1.25, taeg: 4.5, bonus: 'sem produtos associados' },
+  ],
+  mista: [
+    { nome: 'Bankinter — mista 2 anos',         idx: 12, spread: 0.70, tan_fixa: 2.25, taeg: 4.0, bonus: 'TAN 2,25% fixo 24m → Euribor 12m + 0,70%' },
+    { nome: 'Millennium BCP — mista 2 anos',    idx: 12, spread: 0.70, tan_fixa: 3.05, taeg: 3.8, bonus: 'TAN 3,05% fixo 24m → Euribor 12m + 0,70%' },
+    { nome: 'CGD — mista 2 anos',               idx: 6,  spread: 1.35, tan_fixa: 4.60, taeg: 4.4, bonus: 'TAN 4,60% fixo 24m → Euribor 6m + 1,35%' },
+  ],
+  fixa: [
+    { nome: 'Millennium BCP — fixa c/ bonif.',  idx: 0, spread: 0, tan_fixa: 4.05, taeg: 4.7, bonus: 'domiciliação + seguros Ocidental' },
+    { nome: 'Bankinter — fixa 24m + variável',  idx: 12, spread: 1.05, tan_fixa: 3.50, taeg: 4.3, bonus: 'TAN fixa 24m depois converte a variável' },
+    { nome: 'Millennium BCP — fixa sem bonif.', idx: 0, spread: 0, tan_fixa: 4.60, taeg: 5.3, bonus: 'sem produtos associados' },
+  ]
+};
+
+const TAB_INFO = {
+  variavel: 'Taxa variável = Euribor + spread. Revisto a cada 3, 6 ou 12 meses. Comissão amortização antecipada: 0,5%.',
+  mista:    'Taxa mista = período fixo inicial + depois variável indexada à Euribor. Prestação refere-se ao período fixo.',
+  fixa:     'Taxa fixa inalterada durante todo o prazo. Comissão amortização antecipada: 2%.'
+};
+
+let currentTab = 'variavel';
+let chartInst = null;
+
+function setTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function calcP(capital, tan, meses) {
+  const r = tan / 100 / 12;
+  if (r < 0.00001) return capital / meses;
+  return capital * r * Math.pow(1+r, meses) / (Math.pow(1+r, meses) - 1);
+}
+
+function fmt(n) { return n.toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); }
+
+function render() {
+  const rend     = parseFloat(document.getElementById('rend').value)    || 2100;
+  const enc      = parseFloat(document.getElementById('enc').value)     || 0;
+  const vi       = parseFloat(document.getElementById('vimovel').value) || 250000;
+  const ent      = parseFloat(document.getElementById('entrada').value) || 0;
+  const prazo    = parseInt(document.getElementById('prazo').value)     || 30;
+  const hpp      = document.getElementById('thab').value === 'hpp';
+  const ep       = parseInt(document.getElementById('eurpref').value)   || 6;
+  const jovem    = document.getElementById('jovem_toggle').checked;
+  const garantia = jovem && document.getElementById('garantia_toggle').checked;
+  const isExpat  = document.getElementById('expat_toggle').checked;
+  const meses    = prazo * 12;
+  const maxLTV   = isExpat ? 0.70 : (hpp ? 0.90 : 0.80);
+  const capital  = garantia ? vi : Math.min(vi - ent, vi * maxLTV);
+
+  document.getElementById('jovem_panel').className = 'jovem-panel' + (jovem ? ' open' : '');
+  document.getElementById('savings_bar').style.display = jovem ? 'flex' : 'none';
+
+  const p = calcPoupanca(vi, hpp && jovem);
+  const imtEl = document.getElementById('poupanca_imt');
+  const imtSub = document.getElementById('imt_sub');
+  if (!hpp) {
+    imtEl.textContent = 'Não aplicável — apenas para habitação própria permanente';
+    imtEl.style.color = 'var(--warn)';
+    imtSub.textContent = '';
+  } else if (p.tipo === 'total') {
+    imtEl.textContent = `Poupança estimada: ${fmt(p.total)} € (IMT: ${fmt(p.imt)} € + IS: ${fmt(p.is)} € + emolumentos ≈ ${fmt(p.emol)} €)`;
+    imtEl.style.color = 'var(--ok)';
+    imtSub.textContent = 'Imóvel ≤ 330.539 € → isenção total. Confirme requisitos nas Finanças.';
+  } else if (p.tipo === 'parcial') {
+    imtEl.textContent = `Isenção parcial estimada: ${fmt(p.total)} € (proporção até 330.539 €)`;
+    imtEl.style.color = 'var(--warn)';
+    imtSub.textContent = 'Imóvel > 330.539 € → isenção parcial.';
+  } else {
+    imtEl.textContent = 'Imóvel > 660.982 € — sem isenção IMT Jovem';
+    imtEl.style.color = 'var(--bad)';
+    imtSub.textContent = '';
+  }
+  document.getElementById('savings_val').textContent = fmt(p.total) + ' €';
+
+  const gnEl = document.getElementById('garantia_notes');
+  const gWarns = [];
+  if (vi > 450000) gWarns.push('Imóvel > 450.000 € — fora do limite da Garantia Pública');
+  if (rend > 5800) gWarns.push('Rendimento > 5.800 €/mês — verifique elegibilidade');
+  if (!hpp)        gWarns.push('Apenas para habitação própria permanente');
+  gnEl.innerHTML = gWarns.map(w => `<span class="medida-warn-tag">${w}</span>`).join('');
+
+  const banks  = BANKS[currentTab];
+  const b0     = banks[0];
+  const tan0   = b0.tan_fixa !== undefined ? b0.tan_fixa : EUR[ep] + b0.spread;
+  const prest0 = calcP(capital, tan0, meses);
+  const esf0   = (prest0 + enc) / rend * 100;
+  const ltv    = capital / vi * 100;
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="mc">
+      <div class="mc-label">Capital a financiar</div>
+      <div class="mc-val">${fmt(capital)} €</div>
+      <div class="mc-sub">LTV ${ltv.toFixed(1)}%${garantia ? ' · Garantia Pública' : ''}</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Melhor prestação</div>
+      <div class="mc-val">${fmt(prest0)} €<span style="font-size:15px;font-weight:300">/mês</span></div>
+      <div class="mc-sub">${prazo} anos · melhor taxa</div>
+    </div>
+    <div class="mc">
+      <div class="mc-label">Taxa de esforço</div>
+      <div class="mc-val" style="color:${esf0<=35?'var(--ok)':esf0<=45?'var(--warn)':'var(--bad)'}">${esf0.toFixed(1)}%</div>
+      <div class="mc-sub">BdP recomenda ≤ 35–40%</div>
+    </div>
+  `;
+
+  let warns = '';
+  if (isExpat)
+    warns += `<div class="sim-warn">${currentLang==='pt'?'Modo não residente: LTV máximo de 70%. Medidas jovem (IMT, Garantia Pública, IRS Jovem) não aplicáveis.':'Non-resident mode: max 70% LTV. Youth measures (IMT, Public Guarantee, IRS Jovem) not applicable.'}</div>`;
+  if (ltv > maxLTV * 100 && !garantia)
+    warns += `<div class="sim-warn">LTV de ${ltv.toFixed(0)}% excede o máximo de ${(maxLTV*100).toFixed(0)}%. ${isExpat?(currentLang==='pt'?'Aumente a entrada.':'Increase your deposit.'):(currentLang==='pt'?'Aumente a entrada ou use a Garantia Pública (se elegível).':'Increase your deposit or use the Public Guarantee (if eligible).')}</div>`;
+  if (esf0 > 40)
+    warns += `<div class="sim-warn">${currentLang==='pt'?`Taxa de esforço (${esf0.toFixed(1)}%) acima dos 40% — aprovação muito difícil. Aumente o prazo, reduza o valor ou apresente co-titular.`:`Effort rate (${esf0.toFixed(1)}%) above 40% — approval very unlikely. Increase term, reduce value or add a co-borrower.`}</div>`;
+  document.getElementById('warns').innerHTML = warns;
+
+  const prestacoes = [], bankNames = [];
+  let html = '';
+  banks.forEach((b, i) => {
+    const tan   = b.tan_fixa !== undefined ? b.tan_fixa : EUR[ep] + b.spread;
+    const prest = calcP(capital, tan, meses);
+    const esf   = (prest + enc) / rend * 100;
+    const barColor = esf <= 35 ? 'var(--ok)' : esf <= 45 ? 'var(--warn)' : 'var(--bad)';
+    const tag   = esf <= 35
+      ? `<span class="etag etag-ok">${esf.toFixed(1)}%</span>`
+      : esf <= 45
+      ? `<span class="etag etag-warn">${esf.toFixed(1)}%</span>`
+      : `<span class="etag etag-bad">${esf.toFixed(1)}%</span>`;
+    const tanLabel   = b.tan_fixa !== undefined ? `TAN ${b.tan_fixa.toFixed(2)}%` : `spread ${b.spread.toFixed(2)}%`;
+    const euribLabel = b.idx > 0 ? `Euribor ${b.idx}m` : '—';
+    prestacoes.push(Math.round(prest));
+    bankNames.push(b.nome.split('—')[0].trim());
+    html += `
+      <div class="bank-row${i === 0 ? ' best' : ''}">
+        <div>
+          <div class="bank-name">${b.nome}${i === 0 ? '<span class="best-badge">melhor taxa</span>' : ''}</div>
+          <div class="bank-meta">${b.bonus}</div>
+          <div class="bank-bar"><div class="bank-bar-fill" style="width:${Math.min(esf,100)}%;background:${barColor}"></div></div>
+        </div>
+        <div class="bank-col">${tanLabel}<br>TAN ${tan.toFixed(3)}%<br>${euribLabel}</div>
+        <div class="bank-col">TAEG ${b.taeg.toFixed(1)}%<br><br>${tag}</div>
+        <div class="bank-prest-col">
+          <div class="bank-prest">${fmt(prest)} €</div>
+          <div class="bank-prest-sub">/mês · ${prazo}a</div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('banks').innerHTML = html;
+  document.getElementById('note').textContent =
+    TAB_INFO[currentTab] + ' · Euribor ' + LIVE_DATA.date + '. Valores indicativos, sujeitos a análise de risco de crédito. Confirme condições directamente com o banco.';
+
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById('chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: bankNames,
+      datasets: [{
+        label: 'Prestação (€)',
+        data: prestacoes,
+        backgroundColor: prestacoes.map((_, i) => i === 0 ? '#7A3B1E' : '#C4724A'),
+        borderRadius: 3,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#2E1A0E',
+          titleColor: '#D4A882',
+          bodyColor: '#EFE3CF',
+          cornerRadius: 4,
+          callbacks: { label: c => ` ${c.raw.toLocaleString('pt-PT')} €/mês` }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { font: { size: 11, family: "'DM Sans',sans-serif" }, color: '#7A5C44' },
+          grid: { display: false },
+          border: { color: 'rgba(122,59,30,0.12)' }
+        },
+        y: {
+          ticks: { font: { size: 11, family: "'DM Sans',sans-serif" }, color: '#7A5C44', callback: v => v.toLocaleString('pt-PT') + ' €' },
+          grid: { color: 'rgba(122,59,30,0.07)' },
+          border: { color: 'rgba(122,59,30,0.12)' }
+        }
+      }
+    }
+  });
+}
+
+['rend','enc','vimovel','entrada','prazo','thab','eurpref'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render);
+});
+document.getElementById('jovem_toggle').addEventListener('change', function() {
+  if (!this.checked) document.getElementById('garantia_toggle').checked = false;
+  render();
+});
+document.getElementById('garantia_toggle').addEventListener('change', render);
+
+/* expat toggle */
+document.getElementById('expat_toggle').addEventListener('change', function() {
+  const isExpat = this.checked;
+  document.getElementById('expat_panel').className = 'expat-panel' + (isExpat ? ' open' : '');
+  const jovemRow = document.getElementById('jovem_toggle').closest('.toggle-row');
+  if (isExpat) {
+    document.getElementById('jovem_toggle').checked = false;
+    document.getElementById('garantia_toggle').checked = false;
+    document.getElementById('jovem_toggle').disabled = true;
+    if (jovemRow) { jovemRow.style.opacity = '0.4'; jovemRow.style.pointerEvents = 'none'; }
+  } else {
+    document.getElementById('jovem_toggle').disabled = false;
+    if (jovemRow) { jovemRow.style.opacity = ''; jovemRow.style.pointerEvents = ''; }
+  }
+  render();
+});
+
+/* ── Language toggle ── */
+let currentLang = 'pt';
+
+function toggleLang() {
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  const isPT = currentLang === 'pt';
+  document.getElementById('lang-active').textContent   = currentLang.toUpperCase();
+  document.getElementById('lang-inactive').textContent = isPT ? 'EN' : 'PT';
+
+  // nav
+  document.getElementById('nav-cta-btn').textContent = isPT ? 'Simular agora' : 'Simulate now';
+  document.querySelectorAll('.nav-links a[data-pt]').forEach(el => {
+    el.textContent = el.getAttribute('data-' + currentLang);
+  });
+
+  // hero
+  document.querySelector('.hero-label-text').textContent = isPT ? 'Portugal · Maio 2026' : 'Portugal · May 2026';
+  document.querySelector('.hero-serif-line').textContent  = isPT ? 'sem surpresas.' : 'no surprises.';
+  document.querySelector('.hero-desc').textContent = isPT
+    ? 'Taxas reais dos principais bancos portugueses, Euribor actualizada e todas as medidas de apoio jovem em vigor — num só lugar.'
+    : 'Real rates from the main Portuguese banks, updated Euribor and all active youth support measures — in one place.';
+  const heroCtas = document.querySelectorAll('.hero-cta-row a');
+  if (heroCtas[0]) heroCtas[0].textContent = isPT ? 'Iniciar simulação' : 'Start simulation';
+  if (heroCtas[1]) heroCtas[1].textContent = isPT ? 'Medidas jovem' : 'Youth perks';
+
+  // simulator labels
+  document.querySelector('.sim-section-label').textContent = isPT ? 'Ferramenta' : 'Tool';
+  document.querySelector('.sim-section-title').textContent = isPT ? 'Simulador de crédito habitação' : 'Mortgage calculator';
+  document.querySelector('.sim-head-title').textContent    = isPT ? 'Calcula a tua prestação mensal' : 'Calculate your monthly payment';
+  document.querySelector('.sim-head-sub').textContent      = isPT ? 'CGD · Millennium BCP · Bankinter · ABANCA — taxas em tempo real' : 'CGD · Millennium BCP · Bankinter · ABANCA — real-time rates';
+
+  const inputLabels = isPT
+    ? ['Rendimento líquido (€/mês)','Outros créditos (€/mês)','Valor do imóvel (€)','Entrada disponível (€)','Prazo','Tipo de habitação','Indexante Euribor']
+    : ['Net income (€/month)','Other loans (€/month)','Property value (€)','Available deposit (€)','Term','Property type','Euribor index'];
+  document.querySelectorAll('.input-block label').forEach((el, i) => { if (inputLabels[i]) el.textContent = inputLabels[i]; });
+
+  const prazoSel = document.getElementById('prazo');
+  [...prazoSel.options].forEach(o => { o.text = o.value + (isPT ? ' anos' : ' years'); });
+  const thabSel = document.getElementById('thab');
+  thabSel.options[0].text = isPT ? 'Habitação própria permanente' : 'Primary residence';
+  thabSel.options[1].text = isPT ? '2.ª habitação / investimento' : '2nd home / investment';
+  const eurSel = document.getElementById('eurpref');
+  eurSel.options[0].text = isPT ? '6 meses (mais comum)' : '6 months (most common)';
+  eurSel.options[1].text = isPT ? '12 meses' : '12 months';
+  eurSel.options[2].text = isPT ? '3 meses' : '3 months';
+
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.textContent = [isPT?'Variável':'Variable', isPT?'Mista':'Mixed', isPT?'Fixa':'Fixed'][i];
+  });
+
+  // toggles
+  document.querySelectorAll('[data-pt]').forEach(el => {
+    const val = el.getAttribute('data-' + currentLang);
+    if (val && el.children.length === 0) el.textContent = val;
+  });
+
+  // savings bar
+  const savBar = document.querySelector('.savings-bar span');
+  if (savBar) savBar.textContent = isPT ? 'Poupança total estimada na escritura com medidas jovem' : 'Estimated total savings at closing with youth measures';
+
+  // data panel
+  document.querySelector('.data-panel-head-title').innerHTML =
+    `<span class="data-panel-live-dot"></span>${isPT ? 'Taxas ao vivo' : 'Live rates'}`;
+  document.querySelector('.medidas-quick-title').textContent = isPT ? 'Apoios jovem activos' : 'Active youth benefits';
+  const mqTexts = isPT
+    ? ['Isenção total até 330.539 € — OE2026','Imposto do Selo + emolumentos','Garantia Pública — financiamento 100%','IRS Jovem — desconto progressivo']
+    : ['Full exemption up to €330,539 — OE2026','Stamp Duty + registration fees','Public Guarantee — 100% financing','IRS Jovem — progressive discount'];
+  document.querySelectorAll('.mq-text').forEach((el,i) => { if (mqTexts[i]) el.textContent = mqTexts[i]; });
+
+  // how it works
+  const howT = isPT
+    ? ['Taxas reais dos bancos','Euribor actualizada','Medidas jovem 2026','Zero dados pessoais']
+    : ['Real bank rates','Updated Euribor','2026 youth measures','Zero personal data'];
+  const howD = isPT
+    ? ['Spreads e TAEG publicados directamente nos sites de CGD, Millennium BCP, Bankinter e ABANCA. Sem estimativas.',
+       'Taxas diárias do mercado interbancário europeu. Actualizamos regularmente para reflectir o valor real do teu contrato.',
+       'IMT Jovem, Imposto do Selo, Garantia Pública — todas as medidas em vigor calculadas automaticamente.',
+       'Todas as simulações correm no teu browser. Não guardamos nada, não pedimos nada.']
+    : ['Spreads and TAEG published directly on CGD, Millennium BCP, Bankinter and ABANCA websites. No estimates.',
+       'Daily rates from the European interbank market. We update regularly to reflect the real value of your contract.',
+       'IMT Jovem, Stamp Duty, Public Guarantee — all active measures calculated automatically.',
+       'All simulations run in your browser. We store nothing, we ask for nothing.'];
+  document.querySelectorAll('.how-title').forEach((el,i) => { if (howT[i]) el.textContent = howT[i]; });
+  document.querySelectorAll('.how-desc').forEach((el,i)  => { if (howD[i])  el.textContent = howD[i];  });
+
+  // medidas cards
+  const mCardTags   = isPT ? ['IMT Jovem','Imposto do Selo','Garantia Pública','IRS Jovem'] : ['IMT Jovem','Stamp Duty','Public Guarantee','IRS Jovem'];
+  const mCardTitles = isPT
+    ? ['Isenção de IMT','Isenção de IS e emolumentos','Estado como fiador','Desconto progressivo de IRS']
+    : ['IMT Exemption','Stamp Duty exemption','State as guarantor','Progressive IRS discount'];
+  const mCardDescs = isPT
+    ? ['Isenção total de IMT para 1.ª habitação própria e permanente. OE2026 actualizou o limite para 330.539 €.',
+       'Isenção do Imposto do Selo (0,8%) sobre a compra e dos emolumentos de registo. Cumulável com a isenção de IMT.',
+       'O Estado garante até 15% do valor da transação, permitindo financiamento a 100% sem entrada. Imóveis ≤ 450.000 €. Até 31 dez 2026.',
+       'Redução de IRS nos primeiros 10 anos de carreira e/ou até aos 35 anos. Aumenta o rendimento líquido disponível.']
+    : ['Full IMT exemption for primary permanent residence. OE2026 updated the limit to €330,539.',
+       'Stamp Duty exemption (0.8%) on the purchase and registration fees. Can be combined with the IMT exemption.',
+       'The State guarantees up to 15% of the transaction value, enabling 100% financing with no deposit. Properties ≤ €450,000. Until 31 Dec 2026.',
+       'IRS reduction in the first 10 career years and/or up to age 35. Increases net disposable income.'];
+  const mCardVals = isPT
+    ? ['Até ~10–15 mil € poupados','0,8% do valor do imóvel','Sem entrada necessária','Rendimento líquido mais alto']
+    : ['Up to ~€10–15k saved','0.8% of property value','No deposit needed','Higher net income'];
+  document.querySelectorAll('.medida-card-tag').forEach((el,i)   => { if (mCardTags[i])   el.textContent = mCardTags[i]; });
+  document.querySelectorAll('.medida-card-title').forEach((el,i)  => { if (mCardTitles[i]) el.textContent = mCardTitles[i]; });
+  document.querySelectorAll('.medida-card-desc').forEach((el,i)   => { if (mCardDescs[i])  el.textContent = mCardDescs[i]; });
+  document.querySelectorAll('.medida-card-val').forEach((el,i)    => { if (mCardVals[i])   el.textContent = mCardVals[i]; });
+
+  // section labels/titles
+  const sobreLabels = document.querySelectorAll('#sobre .info-label');
+  const sobreTitles = document.querySelectorAll('#sobre .info-title');
+  if (sobreLabels[0]) sobreLabels[0].textContent = isPT ? 'Como funciona' : 'How it works';
+  if (sobreTitles[0]) sobreTitles[0].textContent = isPT ? 'Transparente por definição' : 'Transparent by design';
+  const medidasLabels = document.querySelectorAll('.medidas-wrap .info-label');
+  const medidasTitles = document.querySelectorAll('.medidas-wrap .info-title');
+  if (medidasLabels[0]) medidasLabels[0].textContent = isPT ? 'Medidas em vigor · 2026' : 'Active measures · 2026';
+  if (medidasTitles[0]) medidasTitles[0].textContent = isPT ? 'Apoios para jovens até 35 anos' : 'Support for people under 35';
+
+  // footer
+  const fLinks = document.querySelectorAll('.footer-links a');
+  const fLabels = isPT ? ['Simulador','Medidas jovem','Como funciona'] : ['Calculator','Youth perks','How it works'];
+  fLinks.forEach((a,i) => { if (fLabels[i]) a.textContent = fLabels[i]; });
+  document.querySelector('.footer-disclaimer').textContent = isPT
+    ? 'SpotCredit é uma ferramenta informativa independente. Os valores apresentados são meramente indicativos e não constituem aconselhamento financeiro, proposta de crédito ou compromisso por parte de qualquer instituição bancária. As taxas de juro e spreads são baseados em informação pública dos bancos e podem estar desactualizados. A concessão de crédito está sempre sujeita a análise de risco pela instituição financeira. Confirme sempre as condições directamente com o banco antes de tomar qualquer decisão. Taxas Euribor de 29 Abril 2026 · OE2026 em vigor.'
+    : "SpotCredit is an independent informational tool. All values shown are indicative only and do not constitute financial advice, a credit proposal or commitment by any bank. Interest rates and spreads are based on publicly available bank data and may be out of date. Credit approval is always subject to the bank's own risk assessment. Euribor rates as of 29 April 2026 · OE2026 in force.";
+
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
