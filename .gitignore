@@ -1,2 +1,26 @@
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Project-specific private files
 CLAUDE.md
+
+# Environment & secrets
+.env
+.env.*
+*.local
+*.secret
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Misc
+Thumbs.db

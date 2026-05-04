@@ -1,14 +1,14 @@
-# CréditoPT
+# SpotCredit
 
 > Simulador de crédito habitação para Portugal — taxas reais, Euribor actualizada, medidas jovem 2026.
 
-**[creditopt.io](https://creditopt.io)**
+**[spotcredit.org](https://spotcredit.org)**
 
 ---
 
 ## O que é
 
-CréditoPT é uma página estática, sem dependências de servidor, que permite simular a prestação mensal de um crédito habitação com base nas taxas e condições reais publicadas pelos principais bancos portugueses.
+SpotCredit é uma página estática, sem dependências de servidor, que permite simular a prestação mensal de um crédito habitação com base nas taxas e condições reais publicadas pelos principais bancos portugueses.
 
 Não recolhe dados. Não requer registo. Tudo corre no browser.
 
@@ -37,52 +37,78 @@ index.html     — página completa (HTML + CSS + JS, ficheiro único)
 
 Dependências externas (CDN):
 - [Chart.js 4.4.1](https://www.chartjs.org/) — gráfico de barras
-- [Google Fonts](https://fonts.google.com/) — Lora + DM Sans
+- [Google Fonts](https://fonts.google.com/) — Cormorant Garamond + DM Sans + Space Grotesk
 
 Nenhum framework, nenhum bundler, nenhum processo de build.
 
 ---
 
-## Deploy
+## Deploy — Hetzner VPS
 
-### Opção A — GitHub Pages (recomendado)
-
-```bash
-git init
-git add .
-git commit -m "init: CréditoPT"
-git branch -M main
-git remote add origin https://github.com/teu-user/creditopt.git
-git push -u origin main
-```
-
-Activa GitHub Pages em **Settings → Pages → Source: main / root**.  
-Em seguida, aponta o domínio `creditopt.io` nas definições de DNS do teu registar:
-
-```
-A     @    185.199.108.153
-A     @    185.199.109.153
-A     @    185.199.110.153
-A     @    185.199.111.153
-CNAME www  teu-user.github.io
-```
-
-Adiciona um ficheiro `CNAME` na raiz do repositório com:
-```
-creditopt.io
-```
-
-### Opção B — Netlify / Vercel
-
-Arrasta o ficheiro `index.html` para o painel do Netlify (drop zone) ou usa o CLI:
+### 1. Firewall (ufw)
 
 ```bash
-# Netlify
-npx netlify-cli deploy --prod --dir .
-
-# Vercel
-npx vercel --prod
+ufw allow 22/tcp   # SSH
+ufw allow 80/tcp   # HTTP (redirect para HTTPS)
+ufw allow 443/tcp  # HTTPS
+ufw enable
 ```
+
+### 2. Instalar nginx + certbot
+
+```bash
+apt update && apt install -y nginx certbot python3-certbot-nginx
+```
+
+### 3. Copiar o site
+
+```bash
+mkdir -p /var/www/spotcredit
+cp index.html /var/www/spotcredit/
+chmod 755 /var/www/spotcredit
+chmod 644 /var/www/spotcredit/index.html
+```
+
+### 4. Configurar nginx
+
+```bash
+cp nginx/spotcredit.conf /etc/nginx/sites-available/spotcredit.org
+ln -s /etc/nginx/sites-available/spotcredit.org /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default       # remover default
+nginx -t                                      # validar config
+```
+
+### 5. Obter certificado SSL (Let's Encrypt)
+
+```bash
+certbot --nginx -d spotcredit.org -d www.spotcredit.org
+```
+
+Certbot edita o bloco HTTP temporariamente para o ACME challenge, depois deixa os certs em `/etc/letsencrypt/live/spotcredit.org/`.
+
+### 6. Activar
+
+```bash
+systemctl reload nginx
+```
+
+### Renovação automática (certbot)
+
+O certbot instala um timer systemd ou cron automaticamente. Para verificar:
+
+```bash
+systemctl status certbot.timer
+# ou
+crontab -l | grep certbot
+```
+
+### Actualizar o site
+
+```bash
+cp index.html /var/www/spotcredit/index.html
+```
+
+Não é necessário reiniciar o nginx — o ficheiro é servido directamente do disco.
 
 ---
 
