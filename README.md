@@ -43,72 +43,59 @@ Nenhum framework, nenhum bundler, nenhum processo de build.
 
 ---
 
-## Deploy — Hetzner VPS
+## Deploy
 
-### 1. Firewall (ufw)
+A produção corre num **VPS Hetzner** — nginx a servir o `index.html` estático de
+`/var/www/spotcredit/` — **atrás da Cloudflare**, que faz o TLS público de
+`https://spotcredit.org`. Não há build step: "ir para produção" = pôr o novo
+`index.html` (e/ou a config nginx) no VPS.
 
-```bash
-ufw allow 22/tcp   # SSH
-ufw allow 80/tcp   # HTTP (redirect para HTTPS)
-ufw allow 443/tcp  # HTTPS
-ufw enable
-```
+> ⚠️ **SSL:** o certificado público é da **Cloudflare**, não Let's Encrypt na
+> origem. A firewall só aceita as gamas de IP da Cloudflare, por isso os desafios
+> HTTP-01 do Let's Encrypt nem sequer chegam à origem. O modo TLS entre a
+> Cloudflare e a origem (e o plano de hardening para Full strict + Origin cert)
+> é mantido em notas de deploy internas (não versionadas).
 
-### 2. Instalar nginx + certbot
+### Deploy de conteúdo (caso normal — ex. actualização de taxas)
 
-```bash
-apt update && apt install -y nginx certbot python3-certbot-nginx
-```
-
-### 3. Copiar o site
+A partir do portátil, depois de editar `index.html`:
 
 ```bash
-mkdir -p /var/www/spotcredit
-cp index.html /var/www/spotcredit/
-chmod 755 /var/www/spotcredit
-chmod 644 /var/www/spotcredit/index.html
+# uma vez: cria .env.local com o IP do servidor (gitignored, nunca commitar)
+echo 'VPS_IP=o.teu.ip' > .env.local
+
+git add index.html && git commit -m "taxas: actualização <data>"
+./deploy.sh        # scp index.html → root@$VPS_IP:/var/www/spotcredit/index.html
 ```
 
-### 4. Configurar nginx
+Mudanças só de conteúdo **não** precisam de reload do nginx — o ficheiro estático
+é relido a cada request. O `scp`/SSH só funciona a partir do teu IP de casa
+(regra da firewall, ver abaixo).
+
+### Firewall (Hetzner Cloud Firewall, não `ufw`)
+
+A Cloud Firewall da Hetzner tranca a origem para que nada lhe chegue
+directamente:
+
+- **SSH (22)** ← só o teu IP de casa
+- **HTTP (80) + HTTPS (443)** ← só as gamas de IP da Cloudflare
+- Acesso directo ao IP da Hetzner → ligação recusada (tudo passa pela Cloudflare)
+
+Re-verificar as gamas da Cloudflare periodicamente (`cloudflare.com/ips-v4`);
+actualizar o IP de casa na consola web da Hetzner se mudar.
+
+### Mudar a config do nginx
 
 ```bash
-cp nginx/spotcredit.conf /etc/nginx/sites-available/spotcredit.org
-ln -s /etc/nginx/sites-available/spotcredit.org /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default       # remover default
-nginx -t                                      # validar config
+# do portátil: scp nginx/spotcredit.conf root@$VPS_IP:/tmp/
+cp /tmp/spotcredit.conf /etc/nginx/sites-available/spotcredit.org
+ln -sf /etc/nginx/sites-available/spotcredit.org /etc/nginx/sites-enabled/spotcredit.org
+nginx -t                  # validar SEMPRE antes do reload
+systemctl reload nginx    # graceful, sem ligações perdidas
 ```
 
-### 5. Obter certificado SSL (Let's Encrypt)
-
-```bash
-certbot --nginx -d spotcredit.org -d www.spotcredit.org
-```
-
-Certbot edita o bloco HTTP temporariamente para o ACME challenge, depois deixa os certs em `/etc/letsencrypt/live/spotcredit.org/`.
-
-### 6. Activar
-
-```bash
-systemctl reload nginx
-```
-
-### Renovação automática (certbot)
-
-O certbot instala um timer systemd ou cron automaticamente. Para verificar:
-
-```bash
-systemctl status certbot.timer
-# ou
-crontab -l | grep certbot
-```
-
-### Actualizar o site
-
-```bash
-cp index.html /var/www/spotcredit/index.html
-```
-
-Não é necessário reiniciar o nginx — o ficheiro é servido directamente do disco.
+O runbook completo de servidor (provisioning de raiz, Origin cert, rollback) é
+mantido em notas de deploy internas (não versionadas).
 
 ---
 
@@ -116,18 +103,22 @@ Não é necessário reiniciar o nginx — o ficheiro é servido directamente do 
 
 ### Actualizar taxas Euribor
 
-Edita as três constantes no topo do bloco `<script>` em `index.html`:
+Edita o objecto `LIVE_DATA` no bloco `<script>` em `index.html`. O `const EUR`
+deriva daqui automaticamente — não há valores Euribor hardcoded noutro sítio:
 
 ```js
-const EUR = { 3: 2.109, 6: 2.322, 12: 2.565 };
+const LIVE_DATA = {
+  date:   '29 Abr 2026',   // string mostrada no painel
+  eur3:   2.149,
+  eur6:   2.462,
+  eur12:  2.769,
+  // ...deltas (delta3/6/12, deltaLabel…) e nota do BCE
+};
 ```
 
-E os chips no hero e ticker:
-
-```html
-<span class="tag">Euribor 6m: 2,462%</span>
-<span class="ticker-rate-val">2,462%</span>
-```
+Actualiza também a data no disclaimer perto do fim do HTML
+(`Taxas Euribor de 29 Abril 2026 · OE2026 em vigor`). Faz commit dedicado por
+data — ex. `taxas: actualização 21 Jun 2026`.
 
 ### Actualizar spreads dos bancos
 

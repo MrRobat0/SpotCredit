@@ -1,26 +1,29 @@
-# macOS
+# ── macOS ──
 .DS_Store
 .AppleDouble
 .LSOverride
+Thumbs.db
 
-# Project-specific private files
+# ── Private / project-local (never commit) ──
+# CLAUDE.md = project context for Claude Code; .claude/ = local harness scaffolding
 CLAUDE.md
+.claude/
 
-# Environment & secrets
+# ── Environment & secrets ──
+# .env.local holds VPS_IP
 .env
 .env.*
 *.local
 *.secret
+*.pem
+id_rsa*
 
-# Editor / IDE
+# ── Editor / IDE ──
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Logs
+# ── Logs ──
 *.log
 npm-debug.log*
-
-# Misc
-Thumbs.db
