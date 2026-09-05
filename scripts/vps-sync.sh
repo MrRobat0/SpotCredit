@@ -28,14 +28,18 @@ git -C "$REPO_DIR" fetch --quiet origin "$BRANCH"
 local_sha=$(git -C "$REPO_DIR" rev-parse HEAD)
 remote_sha=$(git -C "$REPO_DIR" rev-parse "origin/$BRANCH")
 
-if [ "$local_sha" = "$remote_sha" ]; then
-  exit 0   # nada novo, sai em silêncio
-fi
+[ "$local_sha" = "$remote_sha" ] || git -C "$REPO_DIR" reset --hard --quiet "origin/$BRANCH"
 
-git -C "$REPO_DIR" reset --hard --quiet "origin/$BRANCH"
+# A decisão de publicar é pelo CONTEÚDO, não pelo SHA: no primeiro arranque o
+# clone já vem com o HEAD certo, mas o webroot ainda tem a versão antiga. Comparar
+# ficheiros cobre esse caso e também um deploy manual que tenha divergido.
+if cmp -s "$REPO_DIR/index.html" "$WEB_DIR/index.html" \
+   && diff -rq "$REPO_DIR/favicon" "$WEB_DIR/favicon" >/dev/null 2>&1; then
+  exit 0   # webroot já em dia, sai em silêncio
+fi
 
 # Publica só o que o site serve — nunca a árvore inteira do repo.
 install -m 0644 "$REPO_DIR/index.html" "$WEB_DIR/index.html"
 rsync -a --delete "$REPO_DIR/favicon/" "$WEB_DIR/favicon/"
 
-log "publicado ${local_sha:0:7} → ${remote_sha:0:7}"
+log "publicado $(git -C "$REPO_DIR" rev-parse --short HEAD)"
