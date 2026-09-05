@@ -706,7 +706,7 @@ footer {
   <div>
     <div class="hero-label">
       <span class="hero-label-line"></span>
-      <span class="hero-label-text">Portugal · Maio 2026</span>
+      <span class="hero-label-text">Portugal · Setembro 2026</span>
     </div>
 
     <h1 class="hero-hed">
@@ -1001,7 +1001,7 @@ footer {
     </div>
   </div>
   <div class="footer-disclaimer">
-    SpotCredit é uma ferramenta informativa independente. Os valores apresentados são meramente indicativos e não constituem aconselhamento financeiro, proposta de crédito ou compromisso por parte de qualquer instituição bancária. As taxas de juro e spreads são baseados em informação pública dos bancos e podem estar desactualizados. A concessão de crédito está sempre sujeita a análise de risco pela instituição financeira. Confirme sempre as condições directamente com o banco antes de tomar qualquer decisão. Taxas Euribor de 29 Abril 2026 · OE2026 em vigor.
+    SpotCredit é uma ferramenta informativa independente. Os valores apresentados são meramente indicativos e não constituem aconselhamento financeiro, proposta de crédito ou compromisso por parte de qualquer instituição bancária. As taxas de juro e spreads são baseados em informação pública dos bancos e podem estar desactualizados. A concessão de crédito está sempre sujeita a análise de risco pela instituição financeira. Confirme sempre as condições directamente com o banco antes de tomar qualquer decisão. Taxas Euribor de 4 Setembro 2026 · OE2026 em vigor.
   </div>
 </footer>
 
@@ -1016,14 +1016,14 @@ footer {
    ║    deltaLabel3/6/12: e.g. "−0.08 pp" shown next to rate     ║
    ╚══════════════════════════════════════════════════════════════╝ */
 const LIVE_DATA = {
-  date:         '29 Abr 2026',
-  bce:          'BCE manteve taxas na reunião de 30 Abr 2026. Próxima decisão: Junho 2026.',
-  eur3:         2.149,
-  eur6:         2.462,
-  eur12:        2.769,
-  delta3:       'down',   deltaLabel3: '−0.06 pp',
-  delta6:       'down',   deltaLabel6: '−0.09 pp',
-  delta12:      'flat',   deltaLabel12: '—',
+  date:         '4 Set 2026',
+  bce:          'subiu as taxas 25 pb a 11 Jun 2026 (facilidade de depósito em 2,25%) e manteve a 23 Jul. Próxima decisão: 10 Set 2026.',
+  eur3:         2.679,
+  eur6:         2.794,
+  eur12:        3.108,
+  delta3:       'up',     deltaLabel3: '+0.024 pp',
+  delta6:       'up',     deltaLabel6: '+0.005 pp',
+  delta12:      'down',   deltaLabel12: '−0.001 pp',
 };
 
 /* Render live data panel */
@@ -1083,24 +1083,31 @@ function calcPoupanca(v, hpp) {
   return { total: 0, tipo: 'excede' };
 }
 
+/* Fonte: exemplos representativos publicados por cada banco (ver data em `bonus`).
+   taeg_est: true → o banco não publica exemplo para esta modalidade; TAEG derivada
+   da TAN actual + custos típicos do próprio banco. Renderizada como "≈ x,x%". */
 const BANKS = {
   variavel: [
-    { nome: 'CGD — com bonificação',           idx: 6,  spread: 0.85, taeg: 3.8, bonus: 'domiciliação + seguros Fidelidade + cartão Caixa' },
-    { nome: 'ABANCA — com bonificação',         idx: 12, spread: 0.70, taeg: 3.8, bonus: 'domiciliação + seguros + cartão crédito ABANCA' },
-    { nome: 'Millennium BCP — com bonif.',      idx: 12, spread: 0.70, taeg: 3.9, bonus: 'domiciliação + seguros Ocidental + cartão crédito' },
-    { nome: 'Bankinter — com bonificação',      idx: 12, spread: 0.70, taeg: 4.0, bonus: 'domiciliação + seguro vida + multirriscos' },
-    { nome: 'CGD — sem bonificação',            idx: 6,  spread: 1.35, taeg: 4.3, bonus: 'sem produtos associados' },
-    { nome: 'Millennium BCP — sem bonif.',      idx: 12, spread: 1.25, taeg: 4.5, bonus: 'sem produtos associados' },
+    { nome: 'Millennium BCP — com bonif.',      idx: 12, spread: 0.70, taeg: 4.3, bonus: 'domiciliação + 3 de 5 produtos · campanha Spread 0 nos 1.os 24 meses (aprovação até 30 Set 2026) · exemplo ago/26' },
+    { nome: 'ABANCA — com bonificação',         idx: 12, spread: 0.70, taeg: 4.3, taeg_est: true, bonus: 'spread base 1,70% − 1,00% (ordenado ≥ 1.000 € + vida + multirriscos + cartão/protecção)' },
+    { nome: 'Bankinter — com bonificação',      idx: 12, spread: 0.70, taeg: 4.2, taeg_est: true, bonus: 'spread base 1,05% − 0,35% (vida 0,20 + multirriscos 0,05 + ordenado 0,10)' },
+    { nome: 'CGD — com bonificação',            idx: 6,  spread: 0.85, taeg: 4.2, bonus: 'Pack Vinculação + Pack Ligação (−0,25 p.p. cada) · exemplo jul/26' },
+    { nome: 'Millennium BCP — sem bonif.',      idx: 12, spread: 1.25, taeg: 4.9, bonus: 'sem vendas associadas facultativas · exemplo ago/26' },
+    { nome: 'CGD — sem bonificação',            idx: 6,  spread: 1.35, taeg: 4.6, bonus: 'sem packs associados · exemplo jul/26' },
   ],
   mista: [
-    { nome: 'Bankinter — mista 2 anos',         idx: 12, spread: 0.70, tan_fixa: 2.25, taeg: 4.0, bonus: 'TAN 2,25% fixo 24m → Euribor 12m + 0,70%' },
-    { nome: 'Millennium BCP — mista 2 anos',    idx: 12, spread: 0.70, tan_fixa: 3.05, taeg: 3.8, bonus: 'TAN 3,05% fixo 24m → Euribor 12m + 0,70%' },
-    { nome: 'CGD — mista 2 anos',               idx: 6,  spread: 1.35, tan_fixa: 4.60, taeg: 4.4, bonus: 'TAN 4,60% fixo 24m → Euribor 6m + 1,35%' },
+    { nome: 'Bankinter — mista 2 anos',         idx: 12, spread: 0.70, tan_fixa: 2.50, taeg: 4.2, bonus: 'TAN 2,50% fixo 24m → Euribor 12m + 0,70% · propostas até 30 Set 2026' },
+    { nome: 'CGD — mista 2 anos c/ packs',      idx: 6,  spread: 0.85, tan_fixa: 2.65, taeg: 4.0, bonus: 'TAN 2,65% fixo 24m → Euribor 6m + 0,85% · exemplo jul/26' },
+    { nome: 'ABANCA — mista 2 anos',            idx: 12, spread: 0.70, tan_fixa: 2.70, taeg: 4.2, bonus: 'TAN desde 2,70% fixo 24m → Euribor 12m + 0,70% · condição Cliente Valor' },
+    { nome: 'Millennium BCP — mista 2 anos',    idx: 12, spread: 0.70, tan_fixa: 3.45, taeg: 4.3, bonus: 'TAN 3,45% fixo 24m → Euribor 12m + 0,70% · exemplo ago/26' },
+    { nome: 'Millennium BCP — mista sem bonif.',idx: 12, spread: 1.25, tan_fixa: 4.00, taeg: 4.9, bonus: 'TAN 4,00% fixo 24m → Euribor 12m + 1,25% · sem vendas associadas' },
   ],
   fixa: [
-    { nome: 'Millennium BCP — fixa c/ bonif.',  idx: 0, spread: 0, tan_fixa: 4.05, taeg: 4.7, bonus: 'domiciliação + seguros Ocidental' },
-    { nome: 'Bankinter — fixa 24m + variável',  idx: 12, spread: 1.05, tan_fixa: 3.50, taeg: 4.3, bonus: 'TAN fixa 24m depois converte a variável' },
-    { nome: 'Millennium BCP — fixa sem bonif.', idx: 0, spread: 0, tan_fixa: 4.60, taeg: 5.3, bonus: 'sem produtos associados' },
+    { nome: 'ABANCA — fixa c/ vendas assoc.',   idx: 0, spread: 0, tan_fixa: 3.85, taeg: 4.5, bonus: 'taxa fixa desde 3,85% · condição Cliente Valor' },
+    { nome: 'Millennium BCP — fixa 30 anos',    idx: 0, spread: 0, tan_fixa: 4.35, taeg: 5.0, bonus: 'com vendas associadas facultativas · exemplo ago/26' },
+    { nome: 'ABANCA — fixa sem vendas assoc.',  idx: 0, spread: 0, tan_fixa: 4.85, taeg: 5.5, bonus: 'sem produtos associados' },
+    { nome: 'Millennium BCP — fixa sem bonif.', idx: 0, spread: 0, tan_fixa: 4.90, taeg: 5.6, bonus: 'sem vendas associadas facultativas · exemplo ago/26' },
+    { nome: 'CGD — fixa 35 anos c/ packs',      idx: 0, spread: 0, tan_fixa: 4.95, taeg: 5.7, bonus: 'Pack Vinculação + Pack Ligação · exemplo jul/26' },
   ]
 };
 
@@ -1196,7 +1203,7 @@ function render() {
     <div class="mc">
       <div class="mc-label">Taxa de esforço</div>
       <div class="mc-val" style="color:${esf0<=35?'var(--ok)':esf0<=45?'var(--warn)':'var(--bad)'}">${esf0.toFixed(1)}%</div>
-      <div class="mc-sub">BdP recomenda ≤ 35–40%</div>
+      <div class="mc-sub">Limite BdP: 45% (desde 1 Ago 2026)</div>
     </div>
   `;
 
@@ -1205,8 +1212,12 @@ function render() {
     warns += `<div class="sim-warn">${currentLang==='pt'?'Modo não residente: LTV máximo de 70%. Medidas jovem (IMT, Garantia Pública, IRS Jovem) não aplicáveis.':'Non-resident mode: max 70% LTV. Youth measures (IMT, Public Guarantee, IRS Jovem) not applicable.'}</div>`;
   if (ltv > maxLTV * 100 && !garantia)
     warns += `<div class="sim-warn">LTV de ${ltv.toFixed(0)}% excede o máximo de ${(maxLTV*100).toFixed(0)}%. ${isExpat?(currentLang==='pt'?'Aumente a entrada.':'Increase your deposit.'):(currentLang==='pt'?'Aumente a entrada ou use a Garantia Pública (se elegível).':'Increase your deposit or use the Public Guarantee (if eligible).')}</div>`;
-  if (esf0 > 40)
-    warns += `<div class="sim-warn">${currentLang==='pt'?`Taxa de esforço (${esf0.toFixed(1)}%) acima dos 40% — aprovação muito difícil. Aumente o prazo, reduza o valor ou apresente co-titular.`:`Effort rate (${esf0.toFixed(1)}%) above 40% — approval very unlikely. Increase term, reduce value or add a co-borrower.`}</div>`;
+  if (esf0 > 45)
+    warns += `<div class="sim-warn">${currentLang==='pt'?`Taxa de esforço (${esf0.toFixed(1)}%) acima do limite de 45% do Banco de Portugal (em vigor desde 1 Ago 2026). Só 10% dos novos contratos de cada banco podem exceder este limite. Aumente o prazo, reduza o valor ou apresente co-titular.`:`Effort rate (${esf0.toFixed(1)}%) above the Banco de Portugal 45% limit (in force since 1 Aug 2026). Only 10% of each bank's new contracts may exceed it. Increase the term, reduce the amount or add a co-borrower.`}</div>`;
+  else if (esf0 > 40)
+    warns += `<div class="sim-warn">${currentLang==='pt'?`Taxa de esforço (${esf0.toFixed(1)}%) perto do limite de 45% do Banco de Portugal — margem curta para subidas da Euribor.`:`Effort rate (${esf0.toFixed(1)}%) close to the Banco de Portugal 45% limit — little headroom if Euribor rises.`}</div>`;
+  if (prazo > 35 && !jovem)
+    warns += `<div class="sim-warn">${currentLang==='pt'?'Desde 1 Ago 2026, prazos até 40 anos só para titulares até 35 anos de idade. Acima dessa idade o máximo é 35 anos.':'Since 1 Aug 2026, terms up to 40 years apply only to borrowers aged 35 or under. Above that age the maximum is 35 years.'}</div>`;
   document.getElementById('warns').innerHTML = warns;
 
   const prestacoes = [], bankNames = [];
@@ -1233,7 +1244,7 @@ function render() {
           <div class="bank-bar"><div class="bank-bar-fill" style="width:${Math.min(esf,100)}%;background:${barColor}"></div></div>
         </div>
         <div class="bank-col">${tanLabel}<br>TAN ${tan.toFixed(3)}%<br>${euribLabel}</div>
-        <div class="bank-col">TAEG ${b.taeg.toFixed(1)}%<br><br>${tag}</div>
+        <div class="bank-col">TAEG ${b.taeg_est ? '≈ ' : ''}${b.taeg.toFixed(1)}%${b.taeg_est ? '*' : ''}<br><br>${tag}</div>
         <div class="bank-prest-col">
           <div class="bank-prest">${fmt(prest)} €</div>
           <div class="bank-prest-sub">/mês · ${prazo}a</div>
@@ -1241,8 +1252,13 @@ function render() {
       </div>`;
   });
   document.getElementById('banks').innerHTML = html;
+  const temEst = banks.some(b => b.taeg_est);
   document.getElementById('note').textContent =
-    TAB_INFO[currentTab] + ' · Euribor ' + LIVE_DATA.date + '. Valores indicativos, sujeitos a análise de risco de crédito. Confirme condições directamente com o banco.';
+    TAB_INFO[currentTab] + ' · Euribor ' + LIVE_DATA.date + '. Valores indicativos, sujeitos a análise de risco de crédito. Confirme condições directamente com o banco.'
+    + (temEst ? (currentLang === 'pt'
+        ? ' * TAEG estimada — o banco não publica exemplo representativo para taxa variável pura; derivada da TAN actual mais os custos típicos do próprio banco.'
+        : ' * Estimated APRC — the bank publishes no representative example for pure variable rate; derived from the current nominal rate plus that bank\'s typical costs.')
+      : '');
 
   if (chartInst) chartInst.destroy();
   chartInst = new Chart(document.getElementById('chart').getContext('2d'), {
@@ -1327,7 +1343,7 @@ function toggleLang() {
   });
 
   // hero
-  document.querySelector('.hero-label-text').textContent = isPT ? 'Portugal · Maio 2026' : 'Portugal · May 2026';
+  document.querySelector('.hero-label-text').textContent = isPT ? 'Portugal · Setembro 2026' : 'Portugal · September 2026';
   document.querySelector('.hero-serif-line').textContent  = isPT ? 'sem surpresas.' : 'no surprises.';
   document.querySelector('.hero-desc').textContent = isPT
     ? 'Taxas reais dos principais bancos portugueses, Euribor actualizada e todas as medidas de apoio jovem em vigor — num só lugar.'
@@ -1433,8 +1449,8 @@ function toggleLang() {
   const fLabels = isPT ? ['Simulador','Medidas jovem','Como funciona'] : ['Calculator','Youth perks','How it works'];
   fLinks.forEach((a,i) => { if (fLabels[i]) a.textContent = fLabels[i]; });
   document.querySelector('.footer-disclaimer').textContent = isPT
-    ? 'SpotCredit é uma ferramenta informativa independente. Os valores apresentados são meramente indicativos e não constituem aconselhamento financeiro, proposta de crédito ou compromisso por parte de qualquer instituição bancária. As taxas de juro e spreads são baseados em informação pública dos bancos e podem estar desactualizados. A concessão de crédito está sempre sujeita a análise de risco pela instituição financeira. Confirme sempre as condições directamente com o banco antes de tomar qualquer decisão. Taxas Euribor de 29 Abril 2026 · OE2026 em vigor.'
-    : "SpotCredit is an independent informational tool. All values shown are indicative only and do not constitute financial advice, a credit proposal or commitment by any bank. Interest rates and spreads are based on publicly available bank data and may be out of date. Credit approval is always subject to the bank's own risk assessment. Euribor rates as of 29 April 2026 · OE2026 in force.";
+    ? 'SpotCredit é uma ferramenta informativa independente. Os valores apresentados são meramente indicativos e não constituem aconselhamento financeiro, proposta de crédito ou compromisso por parte de qualquer instituição bancária. As taxas de juro e spreads são baseados em informação pública dos bancos e podem estar desactualizados. A concessão de crédito está sempre sujeita a análise de risco pela instituição financeira. Confirme sempre as condições directamente com o banco antes de tomar qualquer decisão. Taxas Euribor de 4 Setembro 2026 · OE2026 em vigor.'
+    : "SpotCredit is an independent informational tool. All values shown are indicative only and do not constitute financial advice, a credit proposal or commitment by any bank. Interest rates and spreads are based on publicly available bank data and may be out of date. Credit approval is always subject to the bank's own risk assessment. Euribor rates as of 4 September 2026 · OE2026 in force.";
 
   render();
 }
