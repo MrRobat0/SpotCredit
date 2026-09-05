@@ -36,6 +36,19 @@ const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 
 const fail = (msg) => { console.error('ERRO: ' + msg); console.log('changed=false'); process.exit(1); };
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/* Tudo o que vem da rede e acaba dentro de um literal JS no index.html passa
+   por aqui. O bloco gerado é código que corre no browser de quem visita o site,
+   e o site é publicado sem revisão humana — uma resposta hostil do BPstat (ou um
+   MITM) não pode poder injectar JavaScript na página. Só passam caracteres
+   inofensivos; qualquer aspa, barra ou quebra de linha aborta a corrida. */
+const safeStr = (v, campo) => {
+  const s = String(v);
+  if (!/^[\p{L}\p{N} .:+\-−]{1,40}$/u.test(s)) fail(`campo ${campo} com conteúdo inesperado: ${JSON.stringify(s).slice(0, 80)}`);
+  return s;
+};
+
 /* ── 1. Buscar observações ─────────────────────────────────────────────── */
 
 const ids = Object.values(SERIES).join(',');
@@ -65,6 +78,10 @@ for (const [key, sid] of Object.entries(SERIES)) {
 
   const cur = obs[obs.length - 1];
   const prev = obs[obs.length - 2];
+  /* As datas vêm da rede e são usadas como texto no ficheiro gerado e na
+     comparação de "mês mais recente" — exigir o formato exacto. */
+  if (!ISO_DATE.test(String(cur.reference_date)) || !ISO_DATE.test(String(prev.reference_date)))
+    fail(`série ${sid} com reference_date fora do formato AAAA-MM-DD`);
   const val = Number(cur.value);
   const prevVal = Number(prev.value);
   if (!Number.isFinite(val) || !Number.isFinite(prevVal)) fail(`série ${sid} com valor não numérico`);
@@ -80,8 +97,11 @@ const refDates = new Set(Object.values(latest).map(o => o.date));
 if (refDates.size !== 1) fail(`prazos com meses diferentes: ${[...refDates].join(', ')}`);
 
 const ref = new Date([...refDates][0] + 'T00:00:00Z');
-const mesLabel = `${MESES[ref.getUTCMonth()]} ${ref.getUTCFullYear()}`;
 const prevRef = new Date(Object.values(latest)[0].prevDate + 'T00:00:00Z');
+if (Number.isNaN(ref.getTime()) || Number.isNaN(prevRef.getTime()))
+  fail('reference_date com formato válido mas data inexistente');
+
+const mesLabel = `${MESES[ref.getUTCMonth()]} ${ref.getUTCFullYear()}`;
 const mesAnterior = MESES[prevRef.getUTCMonth()];
 
 /* ── 3. Montar o bloco ─────────────────────────────────────────────────── */
@@ -101,10 +121,10 @@ const d12 = deltaOf(latest.eur12.val, latest.eur12.prevVal);
 
 const block = `${START} — gerado por scripts/update-euribor.mjs. Não editar à mão.
      Fonte: BPstat / Banco de Portugal — Euribor, média mensal (indexante de revisão). */
-  date:         '${mesLabel}',
-  refMonth:     '${[...refDates][0]}',
-  prevMonth:    '${mesAnterior}',
-  updatedAt:    '${new Date().toISOString().slice(0, 10)}',
+  date:         '${safeStr(mesLabel, 'date')}',
+  refMonth:     '${safeStr([...refDates][0], 'refMonth')}',
+  prevMonth:    '${safeStr(mesAnterior, 'prevMonth')}',
+  updatedAt:    '${safeStr(new Date().toISOString().slice(0, 10), 'updatedAt')}',
   eur3:         ${r3(latest.eur3.val).toFixed(3)},
   eur6:         ${r3(latest.eur6.val).toFixed(3)},
   eur12:        ${r3(latest.eur12.val).toFixed(3)},

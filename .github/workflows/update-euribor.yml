@@ -9,10 +9,6 @@ on:
     - cron: '15 8 * * 1-5'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  issues: write
-
 concurrency:
   group: update-euribor
   cancel-in-progress: false
@@ -20,6 +16,8 @@ concurrency:
 jobs:
   euribor:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -29,9 +27,11 @@ jobs:
 
       - name: Buscar Euribor ao BPstat e actualizar index.html
         id: update
+        shell: bash
         run: node scripts/update-euribor.mjs | tee /tmp/euribor.log
 
       - name: Commit se houver mês novo
+        shell: bash
         run: |
           if ! grep -q '^changed=true$' /tmp/euribor.log; then
             echo "Sem mês novo — nada a fazer."
@@ -48,6 +48,9 @@ jobs:
   # O que se automatiza é o lembrete: campanha fora de validade → issue.
   campanhas:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read   # checkout
+      issues: write    # abrir o lembrete
     steps:
       - uses: actions/checkout@v4
 
@@ -56,10 +59,12 @@ jobs:
           node-version: '20'
 
       - name: Verificar validade das campanhas
+        shell: bash
         run: node scripts/check-bank-rates.mjs | tee /tmp/campanhas.log
 
       - name: Abrir issue se alguma expirou
         if: success()
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
