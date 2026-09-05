@@ -125,51 +125,13 @@ selected** so they understand the full cost — not just the monthly payment.
 
 ## 3. VPS / security hardening (Hetzner + Cloudflare)
 
-Cross-reference: personal memory `project_hetzner_hardening.md`. Goal: nobody can reach
-the Hetzner origin directly, bypassing Cloudflare.
+As notas de infraestrutura e segurança vivem **fora do git**, em
+`docs/security.local.md` (gitignored), e na memória pessoal
+`project_hetzner_hardening.md`. Um repositório público não é sítio para o
+inventário do que está e do que não está aplicado num servidor.
 
-### Phase 1 — Hetzner Cloud Firewall ✅ DONE (2026-05-12)
-`spotcredit-fw` applied. Inbound rules:
-1. SSH (22) ← home IPv4 `<home-ipv4>/32` + home IPv6 `/64` (real values kept out of git; set in Hetzner console).
-2. HTTP (80) ← Cloudflare IPv4/IPv6 ranges only.
-3. HTTPS (443) ← same CF ranges.
-4. ICMP ← any.
-Direct hits to the Hetzner IP = connection refused. **Re-verify CF ranges quarterly**
-(`cloudflare.com/ips-v4`); update home IP via Hetzner web console if it changes.
-
-### Phase 2 — nginx `real_ip` ⏸ APPROVED, NOT APPLIED
-Silent bug: `limit_req_zone $binary_remote_addr` (`nginx/spotcredit.conf:8`) keys on the
-**Cloudflare edge IP**, so the 60r/m rate limit is effectively off (one edge = thousands of
-visitors). Logs also show CF IPs, not real visitors.
-**Patch:** add `set_real_ip_from <CF ranges>` + `real_ip_header CF-Connecting-IP;` +
-`real_ip_recursive on;` before the `limit_req_zone` line. Then on server:
-`nginx -t` → `systemctl reload nginx` → confirm real IPs in
-`/var/log/nginx/spotcredit.access.log` (test from 4G for a different IP).
-
-### Phase 3 — Cloudflare Full (strict) + Origin Certificate ⏸ PENDING
-Move CF from Flexible → Full (strict). Use a **Cloudflare Origin Certificate** (15yr, free),
-**not** Let's Encrypt (the firewall blocks LE HTTP-01 challenges; LE isn't in CF ranges).
-Steps: generate Origin cert (CF dash → SSL/TLS → Origin Server) → store in
-`/etc/ssl/spotcredit/` → add `listen 443 ssl http2;` + HTTP→HTTPS redirect to the server
-block → switch CF mode to Full (strict) → verify with `curl --resolve` + browser.
-Do Phase 2 first.
-
-### ⚠️ Working-tree note (uncommitted)
-`git diff nginx/spotcredit.conf` currently **strips the 443/SSL server blocks** and reverts
-the config to HTTP-only (Flexible). This is uncommitted. Decide deliberately: this is the
-*opposite* direction from Phase 3. Either commit it as the documented current Flexible
-state, or discard it before doing Phase 3. **Do not let it land by accident.**
-
-### Other security posture (already in place)
-- CSP `default-src 'none'`, `connect-src 'none'` — no exfiltration path (`spotcredit.conf:52`).
-- Methods limited to GET/HEAD; dotfiles + `.git/.env/...` denied; `server_tokens off`.
-- 100% client-side app, no backend, no user data leaves the browser (CLAUDE.md privacy rule).
-
-### Status
-- [x] Phase 1 firewall
-- [ ] Phase 2 nginx real_ip (patch drafted in prior session, not applied)
-- [ ] Phase 3 CF Full strict + Origin cert
-- [ ] Resolve uncommitted nginx diff intent
+Estado resumido: origem atrás da Cloudflare, com Hetzner Cloud Firewall à frente.
+As fases de hardening e o respectivo estado estão no ficheiro local.
 
 ---
 

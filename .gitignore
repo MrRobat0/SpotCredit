@@ -27,3 +27,6 @@ id_rsa*
 # ── Logs ──
 *.log
 npm-debug.log*
+
+# Notas de infraestrutura/segurança — nunca no repo público
+*.local.md
