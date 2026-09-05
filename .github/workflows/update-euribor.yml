@@ -1,0 +1,85 @@
+name: Actualizar Euribor
+
+# Corre sozinho todos os dias úteis às 08:15 UTC. O BPstat publica a média
+# mensal nos primeiros dias úteis do mês seguinte; correr diariamente e só
+# fazer commit quando o mês muda custa nada e apanha a publicação no próprio
+# dia. O script é idempotente: se não há mês novo, não escreve nada.
+on:
+  schedule:
+    - cron: '15 8 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: update-euribor
+  cancel-in-progress: false
+
+jobs:
+  euribor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Buscar Euribor ao BPstat e actualizar index.html
+        id: update
+        run: node scripts/update-euribor.mjs | tee /tmp/euribor.log
+
+      - name: Commit se houver mês novo
+        run: |
+          if ! grep -q '^changed=true$' /tmp/euribor.log; then
+            echo "Sem mês novo — nada a fazer."
+            exit 0
+          fi
+          MES=$(sed -n 's/^mes=//p' /tmp/euribor.log)
+          git config user.name  "spotcredit-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "taxas: Euribor média mensal de ${MES} (BPstat, automático)"
+          git push
+
+  # Os spreads dos bancos são manuais por decisão de projecto (nada de scraping).
+  # O que se automatiza é o lembrete: campanha fora de validade → issue.
+  campanhas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verificar validade das campanhas
+        run: node scripts/check-bank-rates.mjs | tee /tmp/campanhas.log
+
+      - name: Abrir issue se alguma expirou
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          grep -q '^expired=true$' /tmp/campanhas.log || { echo "Campanhas dentro da validade."; exit 0; }
+          TITULO="Campanhas de banco fora de validade — confirmar taxas"
+          if gh issue list --state open --search "$TITULO in:title" --json title \
+               | grep -q "$TITULO"; then
+            echo "Issue já aberto."
+            exit 0
+          fi
+          {
+            echo "Estas entradas do \`BANKS\` em \`index.html\` passaram a data de validade da campanha:"
+            echo
+            echo '```'
+            grep '^EXPIRADA' /tmp/campanhas.log
+            echo '```'
+            echo
+            echo "Confirmar as condições actuais no exemplo representativo de cada banco e"
+            echo "actualizar \`taeg\`, \`tan_fixa\`, \`spread\`, \`bonus\` e \`validUntil\`."
+            echo "As taxas dos bancos são actualizadas à mão — ver CLAUDE.md, secção"
+            echo "\"Dados de taxas: manuais, nunca scraped\"."
+          } > /tmp/issue.md
+          gh issue create --title "$TITULO" --body-file /tmp/issue.md

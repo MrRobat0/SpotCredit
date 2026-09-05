@@ -101,24 +101,52 @@ mantido em notas de deploy internas (não versionadas).
 
 ## Manutenção
 
-### Actualizar taxas Euribor
+### Actualizar taxas Euribor — automático
 
-Edita o objecto `LIVE_DATA` no bloco `<script>` em `index.html`. O `const EUR`
-deriva daqui automaticamente — não há valores Euribor hardcoded noutro sítio:
+**Não é preciso fazer nada.** A Euribor actualiza-se sozinha:
 
-```js
-const LIVE_DATA = {
-  date:   '29 Abr 2026',   // string mostrada no painel
-  eur3:   2.149,
-  eur6:   2.462,
-  eur12:  2.769,
-  // ...deltas (delta3/6/12, deltaLabel…) e nota do BCE
-};
+```
+GitHub Actions (dias úteis, 08:15 UTC)
+  └─ scripts/update-euribor.mjs
+       ├─ GET bpstat.bportugal.pt/api/observations/  (Banco de Portugal, sem chave)
+       ├─ reescreve o bloco AUTO-EURIBOR do index.html
+       └─ commit "taxas: Euribor média mensal de <mês> (BPstat, automático)"
+                                    │
+VPS (cron */30)                     ▼
+  └─ scripts/vps-sync.sh — git pull + publica index.html e favicon/
 ```
 
-Actualiza também a data no disclaimer perto do fim do HTML
-(`Taxas Euribor de 29 Abril 2026 · OE2026 em vigor`). Faz commit dedicado por
-data — ex. `taxas: actualização 21 Jun 2026`.
+O indexante é a **média mensal** publicada pelo Banco de Portugal (séries BPstat
+13168436 / 13168438 / 13168437), que é o valor pelo qual os contratos portugueses
+são revistos e o mesmo que os bancos citam nos exemplos representativos. O BPstat
+publica-a nos primeiros dias úteis do mês seguinte; o job corre todos os dias úteis
+e só faz commit quando há mês novo.
+
+Guardas do script: recusa escrever se a API falhar, se os três prazos não
+referirem o mesmo mês, se algum valor estiver fora de `[-2, 20]`, ou se o mês do
+ficheiro já for igual ou mais recente. Nunca escreve dados parciais.
+
+O bloco entre `/* AUTO-EURIBOR:START */` e `/* AUTO-EURIBOR:END */` em
+`index.html` é gerado — **editar à mão não serve de nada**, a próxima corrida
+sobrepõe-se. O campo `bce` fica fora do bloco porque continua editorial e manual.
+
+Para forçar uma corrida: Actions → *Actualizar Euribor* → *Run workflow*.
+Localmente: `node scripts/update-euribor.mjs --check` mostra o que faria sem escrever.
+
+Se o painel deixar de ser actualizado, o próprio site denuncia-se: passados 45 dias
+sem `updatedAt` novo, o ponto do painel fica vermelho e a linha de proveniência
+avisa que os dados podem estar desactualizados.
+
+#### Instalação do lado do VPS (uma vez)
+
+```bash
+git clone https://github.com/MrRobat0/SpotCredit.git /srv/spotcredit
+install -m 0755 /srv/spotcredit/scripts/vps-sync.sh /usr/local/bin/vps-sync.sh
+( crontab -l 2>/dev/null; echo '*/30 * * * * /usr/local/bin/vps-sync.sh' ) | crontab -
+```
+
+O clone é por HTTPS de um repo público: o servidor só lê, não precisa de chave
+nem de credenciais, e não há segredos guardados no GitHub.
 
 ### Actualizar spreads dos bancos
 
