@@ -153,11 +153,11 @@ onto the VPS and reload nginx.
 This is the everyday path (e.g. daily rate update). Uses `deploy.sh` (scp):
 ```bash
 # one-time: create .env.local with the server IP (gitignored, never commit)
-echo 'VPS_IP=your.server.ip' > .env.local
+# (obsoleto) o deploy passou a ser git push — ver README, secção Deploy
 
 # after editing index.html:
 git add index.html && git commit -m "taxas: actualização 21 Jun 2026"
-./deploy.sh        # scp index.html → root@$VPS_IP:/var/www/spotcredit/index.html
+git push           # o VPS puxa do main e publica (cron */30)
 ```
 No nginx reload needed for content-only changes (static file is re-read each request).
 > Note: `deploy.sh` connects to the IP. Because of the Phase 1 firewall, SSH/scp only

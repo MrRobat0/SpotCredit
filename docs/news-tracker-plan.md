@@ -218,8 +218,8 @@ async function handleNews(env, ctx, cors) {
   if (resp) return resp;
 
   const [pinned, blocked, feedItems] = await Promise.all([
-    fetchJsonSafe('https://raw.githubusercontent.com/NCyberDev/SpotCredit/main/pinned.json', []),
-    fetchJsonSafe('https://raw.githubusercontent.com/NCyberDev/SpotCredit/main/blocked.json', []),
+    fetchJsonSafe('https://raw.githubusercontent.com/MrRobat0/SpotCredit/main/pinned.json', []),
+    fetchJsonSafe('https://raw.githubusercontent.com/MrRobat0/SpotCredit/main/blocked.json', []),
     fetchAllFeeds(env.FEEDS)
   ]);
 

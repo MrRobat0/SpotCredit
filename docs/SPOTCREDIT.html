@@ -402,7 +402,7 @@ footer strong { color: var(--ink2); font-weight: 500; }
 ├── deploy.sh               <span class="c"># scp para o VPS / scp to the VPS</span>
 ├── docs/                   <span class="c"># este ficheiro vive aqui / this file lives here</span>
 ├── README.md · CLAUDE.md   <span class="c"># manutenção + contexto / maintenance + context</span>
-└── .env.local              <span class="c"># VPS_IP (gitignored, nunca commitar)</span></pre>
+└── docs/security.local.md  <span class="c"># notas de infra (gitignored)</span></pre>
   </section>
 
   <!-- ── 3 · DESIGN SYSTEM ── -->
@@ -759,10 +759,10 @@ n = <span class="c">número de meses = prazo × 12</span>
 
     <h3><span class="lang-pt">Deploy de conteúdo (caso normal)</span><span class="lang-en">Content deploy (normal case)</span></h3>
 <pre><span class="c"># uma vez / once: .env.local com o IP (gitignored)</span>
-echo <span class="k">'VPS_IP=o.teu.ip'</span> &gt; .env.local
+git push  <span class="c"># o VPS puxa e publica (cron 30 min)</span>
 
 git add index.html &amp;&amp; git commit -m <span class="k">"taxas: actualização &lt;data&gt;"</span>
-./deploy.sh   <span class="c"># scp index.html + favicon/ → root@$VPS_IP</span></pre>
+./deploy.sh   <span class="c"># via de emergência; o cron reverte na corrida seguinte</span></pre>
     <p class="lang-pt">Mudanças só de conteúdo <strong>não</strong> precisam de reload do nginx — o ficheiro é relido a cada request.</p>
     <p class="lang-en">Content-only changes do <strong>not</strong> need an nginx reload — the file is re-read on every request.</p>
 
