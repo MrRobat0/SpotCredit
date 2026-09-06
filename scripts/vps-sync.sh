@@ -6,11 +6,14 @@
 # ║  Só lê do GitHub (repo público, HTTPS) — não precisa de chave nenhuma. ║
 # ║  Não faz nada se não houver commits novos.                             ║
 # ║                                                                        ║
-# ║  Instalação (uma vez, como root no VPS):                               ║
-# ║    git clone https://github.com/MrRobat0/SpotCredit.git /srv/spotcredit ║
-# ║    install -m 0755 /srv/spotcredit/scripts/vps-sync.sh /usr/local/bin/ ║
-# ║    ( crontab -l 2>/dev/null; \                                         ║
-# ║      echo '*/30 * * * * /usr/local/bin/vps-sync.sh' ) | crontab -      ║
+# ║  Instalação (uma vez). Corre como root — escreve em /srv, /usr/local    ║
+# ║  e no webroot — mas instala-se a partir de uma conta com sudo:          ║
+# ║    sudo git clone https://github.com/MrRobat0/SpotCredit.git \          ║
+# ║         /srv/spotcredit                                                 ║
+# ║    sudo install -m 0755 /srv/spotcredit/scripts/vps-sync.sh \           ║
+# ║         /usr/local/bin/vps-sync.sh                                      ║
+# ║    echo '*/30 * * * * root /usr/local/bin/vps-sync.sh' \                ║
+# ║      | sudo tee /etc/cron.d/spotcredit-sync                             ║
 # ╚════════════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
@@ -39,7 +42,9 @@ if cmp -s "$REPO_DIR/index.html" "$WEB_DIR/index.html" \
 fi
 
 # Publica só o que o site serve — nunca a árvore inteira do repo.
+# --no-links: um symlink commitado em favicon/ não é recriado no webroot, para
+# que um commit malicioso não possa expor um ficheiro de fora da raiz do site.
 install -m 0644 "$REPO_DIR/index.html" "$WEB_DIR/index.html"
-rsync -a --delete "$REPO_DIR/favicon/" "$WEB_DIR/favicon/"
+rsync -a --no-links --delete "$REPO_DIR/favicon/" "$WEB_DIR/favicon/"
 
 log "publicado $(git -C "$REPO_DIR" rev-parse --short HEAD)"

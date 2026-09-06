@@ -68,7 +68,7 @@ A primeira motivação concreta é a actual onda mediática sobre **"Apoios para
 ## Ficheiros a modificar / criar
 
 ### Modificar
-- **`/Users/nunocoelho/Projects/SpotCredit/index.html`**
+- **`index.html`**
   - HTML: nova secção `<section id="noticias">` entre hero (linha 749) e simulador
   - CSS: estilos `.news-*` no `<style>` (reutiliza `--bg`, `--surf`, `--deep`, `--mid` etc.)
   - JS: `NEWS_FALLBACK` array, helpers `cacheGet/cacheSet`, `fetchLive()`, `renderNews()`, `setupNewsFilters()`, `relativeTime()`. Integração na `toggleLang()` para PT/EN.
@@ -76,18 +76,18 @@ A primeira motivação concreta é a actual onda mediática sobre **"Apoios para
   - Mobile breakpoint @ `max-width: 880px` (alinhado com o existente nas linhas 661–674): grid news 3-col → 1-col, chips wrap.
   - Footer disclaimer: nova linha sobre Worker e privacidade.
 
-- **`/Users/nunocoelho/Projects/SpotCredit/nginx/spotcredit.conf`**
+- **`nginx/spotcredit.conf`**
   - `Content-Security-Policy`: `connect-src 'none'` → `connect-src https://data.spotcredit.org`
   - Manter a linha antiga em comentário para rollback rápido.
 
-- **`/Users/nunocoelho/Projects/SpotCredit/CLAUDE.md`**
+- **`CLAUDE.md`**
   - Actualizar a secção "Regras absolutas → Dados de taxas: manuais, nunca scraped" para reflectir nova política:
     - Bank rates: **continuam** manuais (proibição mantida)
     - Euribor: agora live via Worker, fallback hardcoded
     - News: live via Worker, com moderation gate editorial (commits ao repo)
     - Privacidade: revisada — Worker vê IPs, simulador continua a não enviar PII.
 
-- **`/Users/nunocoelho/Projects/SpotCredit/deploy.sh`**
+- **`deploy.sh`**
   - Adicionar deploy de `pinned.json` e `blocked.json` (são lidos pelo Worker via `raw.githubusercontent.com`, mas também servidos pelo nginx como backup).
 
 ### Criar (nova subpasta `worker/`)
@@ -463,14 +463,14 @@ Pass criteria: zero erros no console em curso normal, page render fallback em �
 
 ## Critical files reference
 
-- `/Users/nunocoelho/Projects/SpotCredit/index.html` — todo o frontend (1439 linhas)
-- `/Users/nunocoelho/Projects/SpotCredit/nginx/spotcredit.conf` — CSP relax
-- `/Users/nunocoelho/Projects/SpotCredit/deploy.sh` — adicionar `pinned.json` + `blocked.json` ao scp
-- `/Users/nunocoelho/Projects/SpotCredit/CLAUDE.md` — actualizar regras (Dados / Privacidade)
-- `/Users/nunocoelho/Projects/SpotCredit/.github/workflows/` — criar `news-preview.yml` (opcional)
-- `/Users/nunocoelho/Projects/SpotCredit/worker/` (novo) — código + config do Cloudflare Worker
-- `/Users/nunocoelho/Projects/SpotCredit/pinned.json` (novo) — moderation
-- `/Users/nunocoelho/Projects/SpotCredit/blocked.json` (novo) — moderation
+- `index.html` — todo o frontend (1439 linhas)
+- `nginx/spotcredit.conf` — CSP relax
+- `deploy.sh` — adicionar `pinned.json` + `blocked.json` ao scp
+- `CLAUDE.md` — actualizar regras (Dados / Privacidade)
+- `.github/workflows/` — criar `news-preview.yml` (opcional)
+- `worker/` (novo) — código + config do Cloudflare Worker
+- `pinned.json` (novo) — moderation
+- `blocked.json` (novo) — moderation
 
 **Funções existentes a reutilizar** (não criar novas):
 - `toggleLang()` no index.html linha 1311 — extender para traduzir labels novas

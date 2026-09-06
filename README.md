@@ -58,19 +58,27 @@ A produção corre num **VPS Hetzner** — nginx a servir o `index.html` estáti
 
 ### Deploy de conteúdo (caso normal — ex. actualização de taxas)
 
-A partir do portátil, depois de editar `index.html`:
+**O deploy normal é `git push`.** O VPS puxa do `main` de 30 em 30 minutos e
+publica (ver *Actualizar taxas Euribor* mais abaixo):
 
 ```bash
-# uma vez: cria .env.local com o IP do servidor (gitignored, nunca commitar)
-echo 'VPS_IP=o.teu.ip' > .env.local
+git add index.html && git commit -m "taxas: actualização <data>" && git push
+```
 
-git add index.html && git commit -m "taxas: actualização <data>"
-./deploy.sh        # scp index.html → root@$VPS_IP:/var/www/spotcredit/index.html
+Para não esperar pelo cron, força a corrida no servidor:
+
+```bash
+ssh -t vps 'sudo /usr/local/bin/vps-sync.sh'
 ```
 
 Mudanças só de conteúdo **não** precisam de reload do nginx — o ficheiro estático
-é relido a cada request. O `scp`/SSH só funciona a partir do teu IP de casa
-(regra da firewall, ver abaixo).
+é relido a cada request.
+
+`deploy.sh` continua a existir como via de emergência (envia a árvore local por
+rsync, sem passar pelo git). Usa um alias `vps` definido no teu `~/.ssh/config` e
+o acesso SSH só funciona a partir do teu IP de casa (regra da firewall, ver
+abaixo). **Atenção**: o que ele publicar é revertido na corrida seguinte do cron,
+porque a fonte de verdade passou a ser o `main`.
 
 ### Firewall (Hetzner Cloud Firewall, não `ufw`)
 
@@ -87,11 +95,11 @@ actualizar o IP de casa na consola web da Hetzner se mudar.
 ### Mudar a config do nginx
 
 ```bash
-# do portátil: scp nginx/spotcredit.conf root@$VPS_IP:/tmp/
-cp /tmp/spotcredit.conf /etc/nginx/sites-available/spotcredit.org
-ln -sf /etc/nginx/sites-available/spotcredit.org /etc/nginx/sites-enabled/spotcredit.org
-nginx -t                  # validar SEMPRE antes do reload
-systemctl reload nginx    # graceful, sem ligações perdidas
+# do portátil: scp nginx/spotcredit.conf vps:/tmp/
+sudo cp /tmp/spotcredit.conf /etc/nginx/sites-available/spotcredit.org
+sudo ln -sf /etc/nginx/sites-available/spotcredit.org /etc/nginx/sites-enabled/spotcredit.org
+sudo nginx -t                  # validar SEMPRE antes do reload
+sudo systemctl reload nginx    # graceful, sem ligações perdidas
 ```
 
 O runbook completo de servidor (provisioning de raiz, Origin cert, rollback) é
@@ -140,10 +148,25 @@ avisa que os dados podem estar desactualizados.
 #### Instalação do lado do VPS (uma vez)
 
 ```bash
-git clone https://github.com/MrRobat0/SpotCredit.git /srv/spotcredit
-install -m 0755 /srv/spotcredit/scripts/vps-sync.sh /usr/local/bin/vps-sync.sh
-( crontab -l 2>/dev/null; echo '*/30 * * * * /usr/local/bin/vps-sync.sh' ) | crontab -
+sudo git clone https://github.com/MrRobat0/SpotCredit.git /srv/spotcredit
+sudo install -m 0755 /srv/spotcredit/scripts/vps-sync.sh /usr/local/bin/vps-sync.sh
+sudo /usr/local/bin/vps-sync.sh                      # primeira publicação, à mão
+echo '*/30 * * * * root /usr/local/bin/vps-sync.sh' | sudo tee /etc/cron.d/spotcredit-sync
 ```
+
+O script corre como root (escreve em `/srv` e no webroot); instala-se a partir de
+qualquer conta com sudo.
+
+> ⚠️ O cron corre a **cópia** em `/usr/local/bin/vps-sync.sh`, congelada no momento
+> da instalação. O `git pull` actualiza `/srv/spotcredit` mas **não** o que corre.
+> Depois de mexeres em `scripts/vps-sync.sh`, repete o `sudo install`. O corte é
+> deliberado: assim um push para o GitHub nunca muda código que corre como root —
+> só o conteúdo servido (`index.html` e `favicon/`). O agendamento vive em `/etc/cron.d/spotcredit-sync` em vez
+do crontab do root — um ficheiro só, fácil de inspeccionar e de remover.
+
+**Depois disto, `deploy.sh` deixa de ser a via normal de deploy**: o que está no
+`main` é o que fica publicado, e um `scp`/`rsync` manual é revertido na corrida
+seguinte. O deploy passa a ser `git push`.
 
 O clone é por HTTPS de um repo público: o servidor só lê, não precisa de chave
 nem de credenciais, e não há segredos guardados no GitHub.
